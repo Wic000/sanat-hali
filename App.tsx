@@ -38,8 +38,8 @@ const App: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedSizeLabel, setSelectedSizeLabel] = useState('');
   const [note, setNote] = useState('');
-  const [isContactLoading, setIsContactLoading] = useState(false);
-  const [phoneStatusMessage, setPhoneStatusMessage] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
@@ -62,15 +62,6 @@ const App: React.FC = () => {
     tg?.ready();
     tg?.expand();
   }, [tg]);
-
-  useEffect(() => {
-    if (telegramUser?.phone_number) {
-      setPhoneStatusMessage(telegramUser.phone_number);
-      return;
-    }
-
-    setPhoneStatusMessage(t(lang, 'phoneConnectHint'));
-  }, [telegramUser?.phone_number, lang]);
 
   useEffect(() => {
     window.localStorage.setItem(LANG_STORAGE_KEY, lang);
@@ -178,7 +169,7 @@ const App: React.FC = () => {
         },
         body: JSON.stringify({
           user: telegramUser,
-          phone: telegramUser?.phone_number || null,
+          phone: phone.trim() || telegramUser?.phone_number || null,
           productName: selectedProduct.name,
           size: selectedSize.label,
           price: selectedPrice,
@@ -204,6 +195,7 @@ const App: React.FC = () => {
         message: t(lang, 'successOrder'),
       });
       setNote('');
+      setShowPhoneModal(false);
     } catch (error) {
       tg?.HapticFeedback?.notificationOccurred?.('error');
       setOrderFeedback({
@@ -221,29 +213,22 @@ const App: React.FC = () => {
     setSelectedSizeLabel(product.sizes[0].label);
   };
 
-  const handleRequestPhone = () => {
+  const handleOrderAction = () => {
     setOrderFeedback({ status: 'idle', message: '' });
+    setPhone((current) => current || telegramUser?.phone_number || '');
+    setShowPhoneModal(true);
+  };
 
-    if (!tg?.requestContact) {
-      setPhoneStatusMessage(t(lang, 'phoneConnectUnsupported'));
+  const handleConfirmOrder = () => {
+    if (!phone.trim() && !telegramUser?.phone_number) {
+      setOrderFeedback({
+        status: 'error',
+        message: t(lang, 'phoneRequired'),
+      });
       return;
     }
 
-    setIsContactLoading(true);
-    setPhoneStatusMessage(t(lang, 'phoneConnectPending'));
-
-    tg.requestContact((shared) => {
-      const latestUser = getInitialTelegramUser();
-      setTelegramUser(latestUser);
-      setIsContactLoading(false);
-
-      if (latestUser?.phone_number) {
-        setPhoneStatusMessage(latestUser.phone_number);
-        return;
-      }
-
-      setPhoneStatusMessage(shared ? t(lang, 'phoneConnectHint') : t(lang, 'phoneConnectDenied'));
-    });
+    submitOrder();
   };
 
   const handleClearSelection = () => {
@@ -252,6 +237,7 @@ const App: React.FC = () => {
     setSelectedSizeLabel('');
     setShowRoomPreview(false);
     setDemoPreviewApplied(false);
+    setShowPhoneModal(false);
     setOrderFeedback({ status: 'idle', message: '' });
   };
 
@@ -308,16 +294,12 @@ const App: React.FC = () => {
                 selectedSizeLabel={selectedSize.label}
                 selectedPriceLabel={formatPrice(selectedPrice)}
                 note={note}
-                isContactLoading={isContactLoading}
-                hasPhone={Boolean(telegramUser?.phone_number)}
-                phoneStatusMessage={phoneStatusMessage}
                 isSubmitting={isSubmitting}
                 orderStatus={orderFeedback.status}
                 orderMessage={orderFeedback.message}
                 onSelectSize={setSelectedSizeLabel}
                 onChangeNote={setNote}
-                onRequestPhone={handleRequestPhone}
-                onSubmit={submitOrder}
+                onSubmit={handleOrderAction}
                 labels={{
                   featured: t(lang, 'featured'),
                   aiAction: t(lang, 'aiPreviewDemo'),
@@ -328,9 +310,6 @@ const App: React.FC = () => {
                   specs: t(lang, 'specs'),
                   note: t(lang, 'note'),
                   notePlaceholder: t(lang, 'notePlaceholder'),
-                  connectPhone: t(lang, 'connectPhone'),
-                  phoneConnected: t(lang, 'phoneConnected'),
-                  phoneMissing: t(lang, 'phoneMissing'),
                   orderSending: t(lang, 'orderSending'),
                   orderNow: t(lang, 'orderNow'),
                 }}
@@ -429,7 +408,7 @@ const App: React.FC = () => {
         <section className="mt-4 lg:hidden">
           <button
             type="button"
-            onClick={submitOrder}
+            onClick={handleOrderAction}
             disabled={isSubmitting || !selectedProduct}
             className={`w-full rounded-[24px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
               theme === 'dark'
@@ -476,6 +455,77 @@ const App: React.FC = () => {
           theme={theme}
         />
       </div>
+
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-[98] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-6">
+          <div className={`w-full rounded-t-[28px] border p-5 shadow-[0_30px_80px_rgba(0,0,0,0.3)] sm:max-w-lg sm:rounded-[30px] ${
+            theme === 'dark'
+              ? 'border-white/10 bg-[rgba(24,21,18,0.98)] text-stone-100'
+              : 'border-white/60 bg-[rgba(255,251,245,0.98)] text-stone-900'
+          }`}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-display text-3xl">{t(lang, 'phoneModalTitle')}</h3>
+                <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+                  {t(lang, 'phoneModalHint')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPhoneModal(false)}
+                className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${
+                  theme === 'dark'
+                    ? 'border-white/10 bg-white/5 text-stone-100'
+                    : 'border-stone-200 bg-white text-stone-800'
+                }`}
+              >
+                {t(lang, 'close')}
+              </button>
+            </div>
+
+            <div className="mt-5">
+              <label className={`block text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+                {t(lang, 'phoneModalTitle')}
+              </label>
+              <input
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className={`mt-3 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition ${
+                  theme === 'dark'
+                    ? 'border-white/10 bg-stone-950 text-stone-100 placeholder:text-stone-500 focus:border-white/20'
+                    : 'border-stone-200 bg-white text-stone-700 placeholder:text-stone-400 focus:border-stone-400'
+                }`}
+                placeholder={t(lang, 'phonePlaceholder')}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleConfirmOrder}
+              disabled={isSubmitting}
+              className={`mt-5 w-full rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                theme === 'dark'
+                  ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
+                  : 'bg-stone-900 text-white hover:bg-stone-800'
+              }`}
+            >
+              {isSubmitting ? t(lang, 'orderSending') : t(lang, 'confirmOrder')}
+            </button>
+
+            {orderFeedback.status !== 'idle' && (
+              <div
+                className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
+                  orderFeedback.status === 'success'
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border border-rose-200 bg-rose-50 text-rose-700'
+                }`}
+              >
+                {orderFeedback.message}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

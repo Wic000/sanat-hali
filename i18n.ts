@@ -132,40 +132,30 @@ export const translations = {
     ru: 'Назад к коллекции',
     en: 'Back to collection',
   },
-  connectPhone: {
-    uz: 'Telefonni ulash',
-    ru: 'Подключить телефон',
-    en: 'Connect phone',
+  phoneModalTitle: {
+    uz: 'Telefon raqami',
+    ru: 'Номер телефона',
+    en: 'Phone number',
   },
-  phoneConnected: {
-    uz: 'Telefon ulandi',
-    ru: 'Телефон подключен',
-    en: 'Phone connected',
+  phoneModalHint: {
+    uz: 'Buyurtmani yuborishdan oldin telefon raqamingizni kiriting.',
+    ru: 'Перед отправкой заказа введите свой номер телефона.',
+    en: 'Enter your phone number before sending the order.',
   },
-  phoneMissing: {
-    uz: 'Telefon ulanmagan',
-    ru: 'Телефон не подключен',
-    en: 'Phone not connected',
+  phonePlaceholder: {
+    uz: '+998 90 123 45 67',
+    ru: '+998 90 123 45 67',
+    en: '+998 90 123 45 67',
   },
-  phoneConnectHint: {
-    uz: 'Buyurtma bilan raqam yuborilishi uchun Telegram kontaktiga ruxsat bering.',
-    ru: 'Разрешите доступ к контакту Telegram, чтобы номер отправлялся вместе с заказом.',
-    en: 'Allow Telegram contact access so the number can be sent with the order.',
+  confirmOrder: {
+    uz: 'Buyurtmani tasdiqlash',
+    ru: 'Подтвердить заказ',
+    en: 'Confirm order',
   },
-  phoneConnectPending: {
-    uz: 'Kontakt oynasi ochilmoqda...',
-    ru: 'Открывается окно контакта...',
-    en: 'Opening contact prompt...',
-  },
-  phoneConnectDenied: {
-    uz: 'Telefon ulanmadi. Qayta urinib ko‘ring.',
-    ru: 'Телефон не подключен. Попробуйте еще раз.',
-    en: 'Phone not connected. Please try again.',
-  },
-  phoneConnectUnsupported: {
-    uz: 'Bu Telegram versiyasida kontakt ulash qo‘llanmaydi.',
-    ru: 'Эта версия Telegram не поддерживает подключение контакта.',
-    en: 'This Telegram version does not support contact connection.',
+  phoneRequired: {
+    uz: 'Telefon raqamini kiriting.',
+    ru: 'Введите номер телефона.',
+    en: 'Enter a phone number.',
   },
   zoomIn: {
     uz: 'Zoom +',
