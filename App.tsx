@@ -43,6 +43,7 @@ const App: React.FC = () => {
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
   const [demoPreviewApplied, setDemoPreviewApplied] = useState(false);
+  const [showRoomPreview, setShowRoomPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<{ status: 'idle' | 'success' | 'error'; message: string }>({
@@ -292,6 +293,9 @@ const App: React.FC = () => {
             roomPlacementMode={roomPlacementMode}
             roomDimensions={roomDimensions}
             demoPreviewApplied={demoPreviewApplied}
+            isOpen={showRoomPreview}
+            onOpen={() => setShowRoomPreview(true)}
+            onClose={() => setShowRoomPreview(false)}
             onUpload={handleRoomUpload}
             onModeChange={(mode) => {
               setRoomPlacementMode(mode);
@@ -314,6 +318,10 @@ const App: React.FC = () => {
               applyPreview: t(lang, 'applyPreview'),
               aiBlock: t(lang, 'aiBlock'),
               aiBlockHint: t(lang, 'aiBlockHint'),
+              openPreview: t(lang, 'openPreview'),
+              openPreviewHint: t(lang, 'openPreviewHint'),
+              close: t(lang, 'close'),
+              takeRoomShot: t(lang, 'takeRoomShot'),
             }}
             theme={theme}
           />

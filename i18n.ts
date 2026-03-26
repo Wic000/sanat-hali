@@ -104,6 +104,18 @@ export const translations = {
     ru: 'Сейчас работает демо UI. Позже в это состояние можно подключить реальный AI API.',
     en: 'The demo UI is active now. A real AI API can plug into this same state later.',
   },
+  openPreview: { uz: "Xonada ko'rish", ru: 'Посмотреть в комнате', en: 'View in room' },
+  openPreviewHint: {
+    uz: "Tanlangan gilamni xonada qanday ko'rinishini ko'rish uchun preview oynasini oching.",
+    ru: 'Откройте окно превью, чтобы посмотреть, как выбранный ковер будет смотреться в комнате.',
+    en: 'Open the preview sheet to see how the selected carpet could look in a room.',
+  },
+  takeRoomShot: {
+    uz: "Xohlasangiz xona rasmini yuklab yoki kamerada olib, tanlangan gilamni ichkarida sinab ko'ring.",
+    ru: 'При желании загрузите фото комнаты или снимите его камерой и попробуйте выбранный ковер внутри.',
+    en: 'Upload a room photo or take one with the camera to try the selected carpet in place.',
+  },
+  close: { uz: 'Yopish', ru: 'Закрыть', en: 'Close' },
   previewReady: { uz: 'Zoom preview', ru: 'Zoom preview', en: 'Zoom preview' },
   collection: { uz: 'Kolleksiya', ru: 'Коллекция', en: 'Collection' },
   supportingGallery: { uz: "Qo'shimcha gallery", ru: 'Дополнительная галерея', en: 'Supporting gallery' },
