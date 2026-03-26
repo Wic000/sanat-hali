@@ -17,6 +17,8 @@ interface ProductInfoPanelProps {
   labels: {
     selectedCarpet: string;
     featured: string;
+    aiAction: string;
+    orderAction: string;
     price: string;
     sizes: string;
     description: string;
@@ -56,6 +58,22 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.selectedCarpet}</p>
         <h2 className={`mt-2 font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{product.name}</h2>
         <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{product.category}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+            theme === 'dark'
+              ? 'border-blue-200/20 bg-blue-200/10 text-blue-100'
+              : 'border-blue-200 bg-blue-50 text-blue-700'
+          }`}>
+            {labels.aiAction}
+          </span>
+          <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+            theme === 'dark'
+              ? 'border-emerald-200/20 bg-emerald-200/10 text-emerald-100'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          }`}>
+            {labels.orderAction}
+          </span>
+        </div>
       </div>
       {product.featured && (
         <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${

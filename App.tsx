@@ -265,6 +265,8 @@ const App: React.FC = () => {
             labels={{
               selectedCarpet: t(lang, 'selectedCarpet'),
               featured: t(lang, 'featured'),
+              aiAction: t(lang, 'aiPreviewDemo'),
+              orderAction: t(lang, 'orderNow'),
               price: t(lang, 'price'),
               sizes: t(lang, 'sizes'),
               description: t(lang, 'description'),
