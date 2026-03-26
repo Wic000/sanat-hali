@@ -21,6 +21,16 @@ interface ShowroomHeaderProps {
   onChangeLang: (lang: AppLang) => void;
 }
 
+const getAvatarLetter = (telegramUser: TelegramUser | null) => {
+  const source =
+    telegramUser?.first_name ||
+    telegramUser?.last_name ||
+    telegramUser?.username ||
+    'S';
+
+  return source.charAt(0).toUpperCase();
+};
+
 const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
   telegramUser,
   isAdmin,
@@ -39,7 +49,11 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
   usernameMissingLabel,
   onToggleTheme,
   onChangeLang,
-}) => (
+}) => {
+  const displayName = telegramUser?.first_name || telegramUser?.last_name || userMissingLabel;
+  const displayUsername = telegramUser?.username ? `@${telegramUser.username}` : usernameMissingLabel;
+
+  return (
   <header className={`mb-4 rounded-[28px] border px-4 py-4 shadow-[0_18px_60px_rgba(90,65,40,0.12)] backdrop-blur-xl sm:px-5 ${
     theme === 'dark'
       ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
@@ -59,15 +73,32 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className={`rounded-2xl border px-3 py-2 shadow-sm ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
-          <div className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-            {customerLabel}
+        <div className={`flex items-center gap-3 rounded-2xl border px-2.5 py-2 shadow-sm ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-bold ${
+            theme === 'dark'
+              ? 'border-white/10 bg-stone-900 text-stone-100'
+              : 'border-stone-200 bg-white text-stone-800'
+          }`}>
+            {telegramUser?.photo_url ? (
+              <img
+                src={telegramUser.photo_url}
+                alt={displayName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              getAvatarLetter(telegramUser)
+            )}
           </div>
-          <div className={`mt-1 text-sm font-semibold ${theme === 'dark' ? 'text-stone-100' : 'text-stone-800'}`}>
-            {telegramUser?.first_name || userMissingLabel}
-          </div>
-          <div className={`text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-            {telegramUser?.username ? `@${telegramUser.username}` : usernameMissingLabel}
+          <div className="min-w-0">
+            <div className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-500' : 'text-stone-500'}`}>
+              {customerLabel}
+            </div>
+            <div className={`truncate text-sm font-semibold ${theme === 'dark' ? 'text-stone-100' : 'text-stone-800'}`}>
+              {displayName}
+            </div>
+            <div className={`truncate text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+              {displayUsername}
+            </div>
           </div>
         </div>
 
@@ -112,6 +143,7 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
       </div>
     </div>
   </header>
-);
+  );
+};
 
 export default ShowroomHeader;
