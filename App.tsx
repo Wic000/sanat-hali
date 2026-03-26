@@ -211,6 +211,15 @@ const App: React.FC = () => {
     setSelectedSizeLabel(product.sizes[0].label);
   };
 
+  const handleClearSelection = () => {
+    setSelectedProductId(null);
+    setSelectedImage('');
+    setSelectedSizeLabel('');
+    setShowRoomPreview(false);
+    setDemoPreviewApplied(false);
+    setOrderFeedback({ status: 'idle', message: '' });
+  };
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_rgba(54,47,40,0.95),_rgba(28,24,21,0.92),_rgba(17,15,14,0.98))] text-stone-100' : 'bg-[radial-gradient(circle_at_top,_rgba(255,248,236,0.95),_rgba(242,234,220,0.82),_rgba(226,217,203,0.94)),linear-gradient(180deg,_#f4efe8_0%,_#ebe3d6_100%)] text-stone-900'}`}>
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-4 pb-10 pt-4 sm:px-5 lg:px-6">
@@ -295,6 +304,8 @@ const App: React.FC = () => {
                 gallery={selectedGallery}
                 onSelectImage={setSelectedImage}
                 zoomLabel={t(lang, 'previewReady')}
+                backLabel={t(lang, 'backToCollection')}
+                onBack={handleClearSelection}
                 theme={theme}
               />
 

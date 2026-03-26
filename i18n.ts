@@ -127,6 +127,11 @@ export const translations = {
     ru: 'После выбора ковра из коллекции здесь появятся описание, AI preview и окно заказа.',
     en: 'After you pick a carpet from the collection, the description, AI preview, and order area will appear here.',
   },
+  backToCollection: {
+    uz: 'Kolleksiyaga qaytish',
+    ru: 'Назад к коллекции',
+    en: 'Back to collection',
+  },
   collection: { uz: 'Kolleksiya', ru: 'Коллекция', en: 'Collection' },
   supportingGallery: { uz: "Qo'shimcha gallery", ru: 'Дополнительная галерея', en: 'Supporting gallery' },
   models: { uz: 'model', ru: 'моделей', en: 'models' },
