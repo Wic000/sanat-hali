@@ -9,9 +9,10 @@ import RoomPreviewPanel from './components/RoomPreviewPanel';
 import ShowroomHeader from './components/ShowroomHeader';
 import { ADMIN_TELEGRAM_IDS, DEFAULT_PRODUCTS, SHOWROOM_COPY } from './constants';
 import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory } from './i18n';
-import { AppLang, Product, RoomDimensions, RoomPlacementMode, TelegramUser, ThemeMode } from './types';
+import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
+const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -20,6 +21,44 @@ const formatPrice = (value: number) =>
 
 const getInitialTelegramUser = (): TelegramUser | null =>
   window.Telegram?.WebApp?.initDataUnsafe?.user ?? null;
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => reject(new Error('Failed to read image'));
+    reader.readAsDataURL(file);
+  });
+
+const resizeImageDataUrl = (source: string, maxSide = 1280) =>
+  new Promise<string>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const largestSide = Math.max(image.width, image.height);
+
+      if (!largestSide || largestSide <= maxSide) {
+        resolve(source);
+        return;
+      }
+
+      const scale = maxSide / largestSide;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+
+      const context = canvas.getContext('2d');
+
+      if (!context) {
+        reject(new Error('Canvas context unavailable'));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.88));
+    };
+    image.onerror = () => reject(new Error('Failed to load image'));
+    image.src = source;
+  });
 
 const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
@@ -43,8 +82,10 @@ const App: React.FC = () => {
   const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
-  const [demoPreviewApplied, setDemoPreviewApplied] = useState(false);
+  const [generatedRoomPreview, setGeneratedRoomPreview] = useState<RoomPreviewResult | null>(null);
   const [showRoomPreview, setShowRoomPreview] = useState(false);
+  const [isGeneratingRoomPreview, setIsGeneratingRoomPreview] = useState(false);
+  const [roomPreviewError, setRoomPreviewError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<{ status: 'idle' | 'success' | 'error'; message: string }>({
@@ -117,7 +158,8 @@ const App: React.FC = () => {
       const existing = selectedProduct.sizes.find((size) => size.label === current);
       return existing ? current : selectedProduct.sizes[0].label;
     });
-    setDemoPreviewApplied(false);
+    setGeneratedRoomPreview(null);
+    setRoomPreviewError('');
   }, [selectedProduct]);
 
   const selectedSize = selectedProduct
@@ -138,19 +180,71 @@ const App: React.FC = () => {
     ];
   }, [telegramUser?.id, lang]);
 
-  const handleRoomUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleRoomUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setRoomImage(typeof reader.result === 'string' ? reader.result : null);
-      setDemoPreviewApplied(false);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const imageSource = await readFileAsDataUrl(file);
+      const resizedImage = await resizeImageDataUrl(imageSource);
+      setRoomImage(resizedImage);
+      setGeneratedRoomPreview(null);
+      setRoomPreviewError('');
+    } catch (error) {
+      setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
+    }
+  };
+
+  const handleGenerateRoomPreview = async () => {
+    if (isGeneratingRoomPreview || !selectedProduct) {
+      return;
+    }
+
+    if (!roomImage) {
+      setRoomPreviewError(t(lang, 'previewMissingRoom'));
+      return;
+    }
+
+    setIsGeneratingRoomPreview(true);
+    setRoomPreviewError('');
+
+    try {
+      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomImage,
+          rugImage: selectedImage || selectedProduct.images[0],
+          productName: selectedProduct.name,
+          placementMode: roomPlacementMode,
+          roomWidth: roomDimensions.width,
+          roomHeight: roomDimensions.height,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.image) {
+        throw new Error(result?.error || t(lang, 'previewError'));
+      }
+
+      tg?.HapticFeedback?.notificationOccurred?.('success');
+      setGeneratedRoomPreview({
+        image: result.image,
+        provider: result.provider || 'openai',
+      });
+    } catch (error) {
+      tg?.HapticFeedback?.notificationOccurred?.('error');
+      setGeneratedRoomPreview(null);
+      setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
+    } finally {
+      setIsGeneratingRoomPreview(false);
+    }
   };
 
   const submitOrder = async () => {
@@ -179,6 +273,7 @@ const App: React.FC = () => {
             width: roomDimensions.width,
             height: roomDimensions.height,
             hasRoomImage: Boolean(roomImage),
+            hasGeneratedPreview: Boolean(generatedRoomPreview?.image),
           },
         }),
       });
@@ -211,6 +306,8 @@ const App: React.FC = () => {
     setSelectedProductId(product.id);
     setSelectedImage(product.images[0]);
     setSelectedSizeLabel(product.sizes[0].label);
+    setGeneratedRoomPreview(null);
+    setRoomPreviewError('');
   };
 
   const handleOrderAction = () => {
@@ -236,7 +333,8 @@ const App: React.FC = () => {
     setSelectedImage('');
     setSelectedSizeLabel('');
     setShowRoomPreview(false);
-    setDemoPreviewApplied(false);
+    setGeneratedRoomPreview(null);
+    setRoomPreviewError('');
     setShowPhoneModal(false);
     setOrderFeedback({ status: 'idle', message: '' });
   };
@@ -340,19 +438,22 @@ const App: React.FC = () => {
             <RoomPreviewPanel
               product={selectedProduct}
               roomImage={roomImage}
+              generatedPreviewImage={generatedRoomPreview?.image || null}
               roomPlacementMode={roomPlacementMode}
               roomDimensions={roomDimensions}
-              demoPreviewApplied={demoPreviewApplied}
               isOpen={showRoomPreview}
+              isGenerating={isGeneratingRoomPreview}
+              previewError={roomPreviewError}
               onOpen={() => setShowRoomPreview(true)}
               onClose={() => setShowRoomPreview(false)}
               onUpload={handleRoomUpload}
               onModeChange={(mode) => {
                 setRoomPlacementMode(mode);
-                setDemoPreviewApplied(false);
+                setGeneratedRoomPreview(null);
+                setRoomPreviewError('');
               }}
               onDimensionsChange={setRoomDimensions}
-              onApply={() => setDemoPreviewApplied(true)}
+              onApply={handleGenerateRoomPreview}
               labels={{
                 roomPreview: t(lang, 'roomPreview'),
                 aiPreviewDemo: t(lang, 'aiPreviewDemo'),
@@ -372,6 +473,8 @@ const App: React.FC = () => {
                 openPreviewHint: t(lang, 'openPreviewHint'),
                 close: t(lang, 'close'),
                 takeRoomShot: t(lang, 'takeRoomShot'),
+                generatingPreview: t(lang, 'generatingPreview'),
+                previewReadyStatus: t(lang, 'previewReadyStatus'),
               }}
               theme={theme}
             />

@@ -75,8 +75,8 @@ export const translations = {
   orderSending: { uz: 'Buyurtma yuborilmoqda...', ru: 'Отправка заказа...', en: 'Sending order...' },
   orderNow: { uz: 'Buyurtma berish', ru: 'Оформить заказ', en: 'Place order' },
   roomPreview: { uz: 'Xona preview', ru: 'Превью комнаты', en: 'Room preview' },
-  aiPreviewDemo: { uz: 'AI preview demo', ru: 'AI preview demo', en: 'AI preview demo' },
-  demoReady: { uz: 'Demo tayyor', ru: 'Демо готово', en: 'Demo ready' },
+  aiPreviewDemo: { uz: 'AI preview', ru: 'AI preview', en: 'AI preview' },
+  demoReady: { uz: 'AI tayyor', ru: 'AI готово', en: 'AI ready' },
   uploadRoomCta: { uz: 'Xona rasmini yuklash', ru: 'Загрузить фото комнаты', en: 'Upload room photo' },
   roomUploadHint: {
     uz: "Tanlangan gilamni interyerga mos ko'rish uchun xona rasmini yuklang.",
@@ -97,7 +97,7 @@ export const translations = {
   },
   roomWidth: { uz: 'Xona eni', ru: 'Ширина комнаты', en: 'Room width' },
   roomHeight: { uz: 'Xona bo‘yi', ru: 'Длина комнаты', en: 'Room height' },
-  applyPreview: { uz: 'Preview qo‘llash', ru: 'Применить превью', en: 'Apply preview' },
+  applyPreview: { uz: 'AI preview yaratish', ru: 'Создать AI preview', en: 'Generate AI preview' },
   aiBlock: { uz: 'AI preview bloki', ru: 'Блок AI preview', en: 'AI preview block' },
   aiBlockHint: {
     uz: 'Demo UI hozir ishlaydi. Keyin shu state ichiga haqiqiy AI API ulanadi.',
@@ -166,6 +166,26 @@ export const translations = {
     uz: 'Zoom -',
     ru: 'Zoom -',
     en: 'Zoom -',
+  },
+  generatingPreview: {
+    uz: 'AI preview yaratilmoqda...',
+    ru: 'AI preview создается...',
+    en: 'Generating AI preview...',
+  },
+  previewReadyStatus: {
+    uz: 'Preview tayyor',
+    ru: 'Preview готово',
+    en: 'Preview ready',
+  },
+  previewMissingRoom: {
+    uz: 'Avval xona rasmini yuklang.',
+    ru: 'Сначала загрузите фото комнаты.',
+    en: 'Upload a room photo first.',
+  },
+  previewError: {
+    uz: 'AI preview yaratishda xatolik yuz berdi.',
+    ru: 'Произошла ошибка при создании AI preview.',
+    en: 'An error occurred while generating the AI preview.',
   },
   collection: { uz: 'Kolleksiya', ru: 'Коллекция', en: 'Collection' },
   supportingGallery: { uz: "Qo'shimcha gallery", ru: 'Дополнительная галерея', en: 'Supporting gallery' },

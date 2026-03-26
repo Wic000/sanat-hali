@@ -51,6 +51,11 @@ export interface RoomDimensions {
   height: string;
 }
 
+export interface RoomPreviewResult {
+  image: string;
+  provider: string;
+}
+
 export interface TelegramWebApp {
   ready: () => void;
   expand: () => void;

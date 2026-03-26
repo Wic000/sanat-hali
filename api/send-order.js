@@ -44,6 +44,7 @@ export default async function handler(req, res) {
     const roomWidth = room?.width || 'not provided';
     const roomHeight = room?.height || 'not provided';
     const hasRoomImage = room?.hasRoomImage ? 'yes' : 'no';
+    const hasGeneratedPreview = room?.hasGeneratedPreview ? 'yes' : 'no';
 
     const text = [
       '<b>New Sanat Hali order</b>',
@@ -58,11 +59,12 @@ export default async function handler(req, res) {
       `<b>Price:</b> ${escapeHtml(formatMoney(price))}`,
       `<b>Note:</b> ${escapeHtml(noteValue)}`,
       '',
-      '<b>Room preview demo</b>',
+      '<b>Room preview</b>',
       `<b>Mode:</b> ${escapeHtml(placementMode)}`,
       `<b>Room width:</b> ${escapeHtml(roomWidth)}`,
       `<b>Room height:</b> ${escapeHtml(roomHeight)}`,
       `<b>Room image uploaded:</b> ${escapeHtml(hasRoomImage)}`,
+      `<b>AI preview generated:</b> ${escapeHtml(hasGeneratedPreview)}`,
     ].join('\n');
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
