@@ -237,18 +237,6 @@ const App: React.FC = () => {
           />
         )}
 
-        <HeroBanner
-          badge={t(lang, 'heroBadge')}
-          title={t(lang, 'heroTitle')}
-          description={t(lang, 'heroDescription')}
-          metrics={[
-            { label: t(lang, 'products'), value: SHOWROOM_COPY.metrics[0].value },
-            { label: t(lang, 'galleryShots'), value: SHOWROOM_COPY.metrics[1].value },
-            { label: t(lang, 'orderRoute'), value: t(lang, 'telegramBot') },
-          ]}
-          theme={theme}
-        />
-
         <CategoryChips
           categories={categories.map((item) => item.label)}
           selectedCategory={translateCategory(selectedCategory, lang)}
@@ -366,6 +354,18 @@ const App: React.FC = () => {
           title={t(lang, 'supportingGallery')}
           modelsLabel={t(lang, 'models')}
           premiumLabel={t(lang, 'featured')}
+          theme={theme}
+        />
+
+        <HeroBanner
+          badge={t(lang, 'heroBadge')}
+          title={t(lang, 'heroTitle')}
+          description={t(lang, 'heroDescription')}
+          metrics={[
+            { label: t(lang, 'products'), value: SHOWROOM_COPY.metrics[0].value },
+            { label: t(lang, 'galleryShots'), value: SHOWROOM_COPY.metrics[1].value },
+            { label: t(lang, 'orderRoute'), value: t(lang, 'telegramBot') },
+          ]}
           theme={theme}
         />
       </div>
