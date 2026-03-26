@@ -222,6 +222,8 @@ const App: React.FC = () => {
   };
 
   const handleRequestPhone = () => {
+    setOrderFeedback({ status: 'idle', message: '' });
+
     if (!tg?.requestContact) {
       setPhoneStatusMessage(t(lang, 'phoneConnectUnsupported'));
       return;
