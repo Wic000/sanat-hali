@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Product, ThemeMode } from '../types';
 
 interface ProductGalleryPanelProps {
@@ -30,9 +30,24 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
 }) => {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.8);
+  const tapRef = useRef(0);
 
   const zoomIn = () => setZoomLevel((value) => Math.min(value + 0.4, 4));
   const zoomOut = () => setZoomLevel((value) => Math.max(value - 0.4, 1));
+  const toggleQuickZoom = () => setZoomLevel((value) => (value < 2.8 ? 3.2 : 1.8));
+
+  const handleImageTap = () => {
+    const now = Date.now();
+    if (now - tapRef.current < 320) {
+      if (!isZoomOpen) {
+        setIsZoomOpen(true);
+        setZoomLevel(3.2);
+      } else {
+        toggleQuickZoom();
+      }
+    }
+    tapRef.current = now;
+  };
 
   return (
     <>
@@ -66,6 +81,7 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
           <button
             type="button"
             onClick={() => setIsZoomOpen(true)}
+            onDoubleClick={handleImageTap}
             className="group relative block w-full overflow-hidden rounded-[24px] bg-[#ede6dc]"
           >
             <img
@@ -159,6 +175,7 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
             }`}>
               <div
                 className="mx-auto"
+                onDoubleClick={handleImageTap}
                 style={{
                   width: `${zoomLevel * 100}%`,
                   minWidth: `${zoomLevel * 100}%`,
