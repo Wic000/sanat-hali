@@ -132,6 +132,16 @@ export const translations = {
     ru: 'Назад к коллекции',
     en: 'Back to collection',
   },
+  zoomIn: {
+    uz: 'Zoom +',
+    ru: 'Zoom +',
+    en: 'Zoom +',
+  },
+  zoomOut: {
+    uz: 'Zoom -',
+    ru: 'Zoom -',
+    en: 'Zoom -',
+  },
   collection: { uz: 'Kolleksiya', ru: 'Коллекция', en: 'Collection' },
   supportingGallery: { uz: "Qo'shimcha gallery", ru: 'Дополнительная галерея', en: 'Supporting gallery' },
   models: { uz: 'model', ru: 'моделей', en: 'models' },

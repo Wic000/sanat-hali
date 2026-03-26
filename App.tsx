@@ -38,7 +38,6 @@ const App: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedSizeLabel, setSelectedSizeLabel] = useState('');
   const [note, setNote] = useState('');
-  const [phone, setPhone] = useState(telegramUser?.phone_number ?? '');
   const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
@@ -168,7 +167,7 @@ const App: React.FC = () => {
         },
         body: JSON.stringify({
           user: telegramUser,
-          phone: phone.trim() || telegramUser?.phone_number || null,
+          phone: telegramUser?.phone_number || null,
           productName: selectedProduct.name,
           size: selectedSize.label,
           price: selectedPrice,
@@ -273,13 +272,11 @@ const App: React.FC = () => {
                 selectedSizeLabel={selectedSize.label}
                 selectedPriceLabel={formatPrice(selectedPrice)}
                 note={note}
-                phone={phone}
                 isSubmitting={isSubmitting}
                 orderStatus={orderFeedback.status}
                 orderMessage={orderFeedback.message}
                 onSelectSize={setSelectedSizeLabel}
                 onChangeNote={setNote}
-                onChangePhone={setPhone}
                 onSubmit={submitOrder}
                 labels={{
                   featured: t(lang, 'featured'),
@@ -291,7 +288,6 @@ const App: React.FC = () => {
                   specs: t(lang, 'specs'),
                   note: t(lang, 'note'),
                   notePlaceholder: t(lang, 'notePlaceholder'),
-                  phone: t(lang, 'phone'),
                   orderSending: t(lang, 'orderSending'),
                   orderNow: t(lang, 'orderNow'),
                 }}
@@ -305,6 +301,9 @@ const App: React.FC = () => {
                 onSelectImage={setSelectedImage}
                 zoomLabel={t(lang, 'previewReady')}
                 backLabel={t(lang, 'backToCollection')}
+                closeLabel={t(lang, 'close')}
+                zoomInLabel={t(lang, 'zoomIn')}
+                zoomOutLabel={t(lang, 'zoomOut')}
                 onBack={handleClearSelection}
                 theme={theme}
               />

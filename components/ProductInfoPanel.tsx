@@ -6,13 +6,11 @@ interface ProductInfoPanelProps {
   selectedSizeLabel: string;
   selectedPriceLabel: string;
   note: string;
-  phone: string;
   isSubmitting: boolean;
   orderMessage: string;
   orderStatus: 'idle' | 'success' | 'error';
   onSelectSize: (sizeLabel: string) => void;
   onChangeNote: (value: string) => void;
-  onChangePhone: (value: string) => void;
   onSubmit: () => void;
   labels: {
     featured: string;
@@ -24,7 +22,6 @@ interface ProductInfoPanelProps {
     specs: string;
     note: string;
     notePlaceholder: string;
-    phone: string;
     orderSending: string;
     orderNow: string;
   };
@@ -36,13 +33,11 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
   selectedSizeLabel,
   selectedPriceLabel,
   note,
-  phone,
   isSubmitting,
   orderMessage,
   orderStatus,
   onSelectSize,
   onChangeNote,
-  onChangePhone,
   onSubmit,
   labels,
   theme,
@@ -152,20 +147,6 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
             : 'border-stone-200 bg-white text-stone-700 placeholder:text-stone-400 focus:border-stone-400'
         }`}
         placeholder={labels.notePlaceholder}
-      />
-    </div>
-
-    <div className={`mt-4 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'}`}>
-      <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.phone}</div>
-      <input
-        value={phone}
-        onChange={(event) => onChangePhone(event.target.value)}
-        className={`mt-3 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition ${
-          theme === 'dark'
-            ? 'border-white/10 bg-stone-950 text-stone-100 placeholder:text-stone-500 focus:border-white/20'
-            : 'border-stone-200 bg-white text-stone-700 placeholder:text-stone-400 focus:border-stone-400'
-        }`}
-        placeholder="+998 90 123 45 67"
       />
     </div>
 
