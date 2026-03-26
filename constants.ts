@@ -3,11 +3,14 @@ import { Product } from './types';
 export const ADMIN_TELEGRAM_IDS = [704362699];
 
 const imagePool = [
-  '/rugs/rug1.svg',
-  '/rugs/rug2.svg',
-  '/rugs/rug3.svg',
-  '/rugs/rug4.svg',
-  '/rugs/rug5.svg',
+  '/images/gilam1.jpg',
+  '/images/gilam2.jpg',
+  '/images/gilam3.jpg',
+  '/images/gilam4.jpg',
+  '/images/gilam5.jpg',
+  '/images/gilam6.jpg',
+  '/images/gilam7.jpg',
+  '/images/gilam8.jpg',
 ];
 
 const galleryFor = (primary: string, startIndex: number) => {
@@ -29,7 +32,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Sofiya Klassik', ru: 'София Классик', en: 'Sofiya Classic' },
     category: 'Classic',
     basePrice: 3600000,
-    images: galleryFor('/rugs/rug1.svg', 0),
+    images: galleryFor('/images/gilam1.jpg', 0),
     sizes: sharedSizes,
     description: 'Refined classic carpet with warm ivory balance and a salon-grade finish for elegant living rooms.',
     descriptionI18n: {
@@ -52,7 +55,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Modern Grid', ru: 'Модерн Грид', en: 'Modern Grid' },
     category: 'Modern',
     basePrice: 2550000,
-    images: galleryFor('/rugs/rug2.svg', 1),
+    images: galleryFor('/images/gilam2.jpg', 1),
     sizes: [
       { label: '160 x 230 cm', multiplier: 0.82 },
       { label: '200 x 300 cm', multiplier: 1 },
@@ -78,7 +81,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Loop Pattern', ru: 'Луп Паттерн', en: 'Loop Pattern' },
     category: 'Modern',
     basePrice: 2450000,
-    images: galleryFor('/rugs/rug3.svg', 2),
+    images: galleryFor('/images/gilam3.jpg', 2),
     sizes: [
       { label: '160 x 230 cm', multiplier: 0.8 },
       { label: '200 x 300 cm', multiplier: 1 },
@@ -104,7 +107,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Marble Light', ru: 'Марбл Лайт', en: 'Marble Light' },
     category: 'Abstract',
     basePrice: 2790000,
-    images: galleryFor('/rugs/rug4.svg', 3),
+    images: galleryFor('/images/gilam4.jpg', 3),
     sizes: sharedSizes,
     description: 'Light marble movement with a clean premium surface for polished modern interiors.',
     descriptionI18n: {
@@ -126,7 +129,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Blue Marble', ru: 'Блу Марбл', en: 'Blue Marble' },
     category: 'Abstract',
     basePrice: 2990000,
-    images: galleryFor('/rugs/rug5.svg', 4),
+    images: galleryFor('/images/gilam5.jpg', 4),
     sizes: sharedSizes,
     description: 'Bold marble-inspired statement piece with cooler undertones and stronger depth.',
     descriptionI18n: {
@@ -148,7 +151,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Gold Bloom', ru: 'Голд Блум', en: 'Gold Bloom' },
     category: 'Classic',
     basePrice: 3350000,
-    images: galleryFor('/rugs/rug1.svg', 0),
+    images: galleryFor('/images/gilam6.jpg', 5),
     sizes: sharedSizes,
     description: 'Warm gold detailing creates a formal showroom look without feeling heavy.',
     descriptionI18n: {
@@ -171,7 +174,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Persian Soft', ru: 'Персиан Софт', en: 'Persian Soft' },
     category: 'Classic',
     basePrice: 3890000,
-    images: galleryFor('/rugs/rug2.svg', 1),
+    images: galleryFor('/images/gilam7.jpg', 6),
     sizes: [
       { label: '200 x 300 cm', multiplier: 1 },
       { label: '250 x 350 cm', multiplier: 1.28 },
@@ -198,7 +201,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     nameI18n: { uz: 'Abstract Stone', ru: 'Абстракт Стоун', en: 'Abstract Stone' },
     category: 'Abstract',
     basePrice: 2850000,
-    images: galleryFor('/rugs/rug3.svg', 2),
+    images: galleryFor('/images/gilam8.jpg', 7),
     sizes: sharedSizes,
     description: 'Stone-toned texture with gentle warmth for premium apartments and staged rooms.',
     descriptionI18n: {
