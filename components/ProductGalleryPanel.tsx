@@ -30,15 +30,15 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
 }) => {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.8);
-  const tapRef = useRef(0);
+  const tapRef = useRef({ time: 0, zone: '' });
 
   const zoomIn = () => setZoomLevel((value) => Math.min(value + 0.4, 4));
   const zoomOut = () => setZoomLevel((value) => Math.max(value - 0.4, 1));
   const toggleQuickZoom = () => setZoomLevel((value) => (value < 2.8 ? 3.2 : 1.8));
 
-  const handleImageTap = () => {
+  const handleQuickZoom = (zone: 'preview' | 'modal') => {
     const now = Date.now();
-    if (now - tapRef.current < 320) {
+    if (now - tapRef.current.time < 320 && tapRef.current.zone === zone) {
       if (!isZoomOpen) {
         setIsZoomOpen(true);
         setZoomLevel(3.2);
@@ -46,7 +46,7 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
         toggleQuickZoom();
       }
     }
-    tapRef.current = now;
+    tapRef.current = { time: now, zone };
   };
 
   return (
@@ -81,7 +81,8 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
           <button
             type="button"
             onClick={() => setIsZoomOpen(true)}
-            onDoubleClick={handleImageTap}
+            onDoubleClick={() => handleQuickZoom('preview')}
+            onTouchEnd={() => handleQuickZoom('preview')}
             className="group relative block w-full overflow-hidden rounded-[24px] bg-[#ede6dc]"
           >
             <img
@@ -175,7 +176,8 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
             }`}>
               <div
                 className="mx-auto"
-                onDoubleClick={handleImageTap}
+                onDoubleClick={() => handleQuickZoom('modal')}
+                onTouchEnd={() => handleQuickZoom('modal')}
                 style={{
                   width: `${zoomLevel * 100}%`,
                   minWidth: `${zoomLevel * 100}%`,
