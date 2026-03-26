@@ -19,6 +19,16 @@ const THEME_STORAGE_KEY = 'sanat-hali-theme';
 const formatPrice = (value: number) =>
   `${new Intl.NumberFormat('en-US').format(value).replace(/,/g, ' ')} so'm`;
 
+const parseJsonResponse = async (response: Response) => {
+  const rawText = await response.text();
+
+  try {
+    return rawText ? JSON.parse(rawText) : {};
+  } catch {
+    return { error: rawText || 'Unexpected server response' };
+  }
+};
+
 const getInitialTelegramUser = (): TelegramUser | null =>
   window.Telegram?.WebApp?.initDataUnsafe?.user ?? null;
 
@@ -227,7 +237,7 @@ const App: React.FC = () => {
         }),
       });
 
-      const result = await response.json();
+      const result = await parseJsonResponse(response);
 
       if (!response.ok || !result?.image) {
         throw new Error(result?.error || t(lang, 'previewError'));
@@ -278,7 +288,7 @@ const App: React.FC = () => {
         }),
       });
 
-      const result = await response.json();
+      const result = await parseJsonResponse(response);
 
       if (!response.ok) {
         throw new Error(result?.error || 'Order request failed');

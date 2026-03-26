@@ -1,4 +1,4 @@
-const XAI_API_URL = 'https://api.x.ai/v1/images/generations';
+const XAI_API_URL = 'https://api.x.ai/v1/images/edits';
 
 const absoluteImageUrl = (event, imagePath) => {
   if (!imagePath) {
@@ -56,7 +56,7 @@ export async function handler(event) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.XAI_IMAGE_MODEL || 'grok-2-image-1212',
+        model: process.env.XAI_IMAGE_MODEL || 'grok-imagine-image',
         prompt: [
           `Create a photorealistic interior preview using the provided room photo and the provided carpet product image named "${productName}".`,
           `Keep the room architecture, furniture, walls, and lighting realistic.`,
@@ -67,20 +67,31 @@ export async function handler(event) {
           'Return one premium showroom-style preview image.',
         ].join(' '),
         response_format: 'b64_json',
-        image: [
+        images: [
           { image_url: roomImage },
           { image_url: absoluteImageUrl(event, rugImage) },
         ],
       }),
     });
 
-    const payload = await response.json();
+    const rawPayload = await response.text();
+    let payload = null;
+
+    try {
+      payload = rawPayload ? JSON.parse(rawPayload) : null;
+    } catch {
+      payload = null;
+    }
 
     if (!response.ok) {
       return {
         statusCode: response.status,
         body: JSON.stringify({
-          error: payload?.error?.message || payload?.message || 'xAI image generation request failed',
+          error:
+            payload?.error?.message ||
+            payload?.message ||
+            rawPayload ||
+            'xAI image edit request failed',
         }),
       };
     }
