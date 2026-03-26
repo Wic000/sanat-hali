@@ -54,10 +54,10 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
   theme,
 }) => (
   <>
-    <section className={`order-4 rounded-[30px] border p-5 shadow-[0_18px_70px_rgba(88,63,37,0.1)] backdrop-blur-xl lg:order-3 ${
+    <section className={`order-4 rounded-[32px] border p-5 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl lg:order-3 ${
       theme === 'dark'
-        ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
-        : 'border-white/60 bg-[rgba(255,251,245,0.72)]'
+        ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
+        : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
     }`}>
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -66,14 +66,14 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
           <p className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{labels.openPreviewHint}</p>
         </div>
         <div className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${
-          theme === 'dark' ? 'border-blue-200/20 bg-blue-200/10 text-blue-100' : 'border-blue-200 bg-blue-50 text-blue-700'
+          theme === 'dark' ? 'border-blue-200/20 bg-blue-200/10 text-blue-100' : 'border-white/80 bg-[rgba(225,236,255,0.58)] text-blue-700'
         }`}>
           {labels.demoReady}
         </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'}`}>
+        <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
           <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.aiPreviewDemo}</div>
           <div className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
             {labels.takeRoomShot}
@@ -86,7 +86,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
           className={`rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.18)] transition ${
             theme === 'dark'
               ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
-              : 'bg-stone-900 text-white hover:bg-stone-800'
+              : 'border border-white/85 bg-[rgba(255,255,255,0.7)] text-stone-900 hover:bg-[rgba(255,255,255,0.82)]'
           }`}
         >
           {labels.openPreview}

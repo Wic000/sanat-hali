@@ -19,14 +19,14 @@ const CategoryChips: React.FC<CategoryChipsProps> = ({ categories, selectedCateg
             key={category}
             type="button"
             onClick={() => onSelect(category)}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold backdrop-blur-xl transition ${
                 active
                 ? theme === 'dark'
-                  ? 'border-amber-100 bg-amber-100 text-stone-900 shadow-[0_14px_24px_rgba(28,25,23,0.16)]'
-                  : 'border-stone-900 bg-stone-900 text-white shadow-[0_14px_24px_rgba(28,25,23,0.16)]'
+                  ? 'border-amber-100/50 bg-[rgba(255,238,191,0.9)] text-stone-900 shadow-[0_14px_24px_rgba(28,25,23,0.16)]'
+                  : 'border-white/80 bg-[rgba(255,255,255,0.62)] text-stone-900 shadow-[0_14px_24px_rgba(125,145,178,0.16)]'
                 : theme === 'dark'
                   ? 'border-white/10 bg-white/5 text-stone-300 shadow-sm hover:border-white/20 hover:text-white'
-                  : 'border-white/70 bg-white/75 text-stone-700 shadow-sm hover:border-stone-300 hover:text-stone-900'
+                  : 'border-white/80 bg-[rgba(255,255,255,0.36)] text-stone-700 shadow-sm hover:bg-[rgba(255,255,255,0.52)] hover:text-stone-900'
             }`}
           >
             {category}

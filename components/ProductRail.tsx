@@ -14,10 +14,10 @@ interface ProductRailProps {
 }
 
 const ProductRail: React.FC<ProductRailProps> = ({ products, selectedProductId, formatPrice, onSelect, collectionLabel, title, modelsLabel, premiumLabel, theme }) => (
-  <section className={`mt-6 rounded-[30px] border p-4 shadow-[0_18px_70px_rgba(88,63,37,0.1)] backdrop-blur-xl sm:p-5 ${
+  <section className={`mt-6 rounded-[32px] border p-4 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl sm:p-5 ${
     theme === 'dark'
-      ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
-      : 'border-white/60 bg-[rgba(255,251,245,0.72)]'
+      ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
+      : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
   }`}>
     <div className="flex items-end justify-between gap-4">
       <div>
@@ -43,7 +43,7 @@ const ProductRail: React.FC<ProductRailProps> = ({ products, selectedProductId, 
                   : 'border-stone-900 bg-stone-900/5 shadow-[0_12px_24px_rgba(28,25,23,0.12)]'
                 : theme === 'dark'
                   ? 'border-white/10 bg-white/5'
-                  : 'border-white/70 bg-white/70'
+                  : 'border-white/80 bg-white/38'
             }`}
           >
             <div className="relative aspect-square overflow-hidden">
@@ -80,7 +80,7 @@ const ProductRail: React.FC<ProductRailProps> = ({ products, selectedProductId, 
                   : 'border-stone-900 bg-stone-900 text-white shadow-[0_18px_40px_rgba(28,25,23,0.18)]'
                 : theme === 'dark'
                   ? 'border-white/10 bg-white/5 text-stone-100 shadow-sm hover:-translate-y-1 hover:border-white/20'
-                  : 'border-white/70 bg-white/80 text-stone-900 shadow-sm hover:-translate-y-1 hover:border-stone-300'
+                  : 'border-white/80 bg-white/42 text-stone-900 shadow-sm hover:-translate-y-1 hover:border-white hover:bg-white/60'
             }`}
           >
             <div className="aspect-[4/3] overflow-hidden">

@@ -42,10 +42,10 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
   labels,
   theme,
 }) => (
-  <section className={`order-3 rounded-[30px] border p-5 shadow-[0_18px_70px_rgba(88,63,37,0.1)] backdrop-blur-xl lg:order-1 ${
+  <section className={`order-3 rounded-[32px] border p-5 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl lg:order-1 ${
     theme === 'dark'
-      ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
-      : 'border-white/60 bg-[rgba(255,251,245,0.72)]'
+      ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
+      : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
   }`}>
     <div className="flex items-start justify-between gap-4">
       <div>
@@ -79,7 +79,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
       )}
     </div>
 
-    <div className={`mt-5 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'}`}>
+    <div className={`mt-5 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
       <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.price}</div>
       <div className={`mt-2 text-3xl font-semibold ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{selectedPriceLabel}</div>
     </div>
@@ -102,7 +102,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
                     : 'border-stone-900 bg-stone-900 text-white'
                   : theme === 'dark'
                     ? 'border-white/10 bg-white/5 text-stone-300 hover:border-white/20'
-                    : 'border-stone-200 bg-white text-stone-700 hover:border-stone-400'
+                    : 'border-white/80 bg-white/56 text-stone-700 hover:border-white hover:bg-white/72'
               }`}
             >
               {size.label}
@@ -126,7 +126,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
             className={`rounded-full border px-3 py-2 text-xs font-medium ${
               theme === 'dark'
                 ? 'border-white/10 bg-white/5 text-stone-300'
-                : 'border-stone-200 bg-white text-stone-600'
+                : 'border-white/80 bg-white/46 text-stone-600'
             }`}
           >
             {spec}
@@ -135,7 +135,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
       </div>
     </div>
 
-    <div className={`mt-5 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'}`}>
+    <div className={`mt-5 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
       <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.note}</div>
       <textarea
         value={note}
@@ -143,8 +143,8 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         rows={3}
         className={`mt-3 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition ${
           theme === 'dark'
-            ? 'border-white/10 bg-stone-950 text-stone-100 placeholder:text-stone-500 focus:border-white/20'
-            : 'border-stone-200 bg-white text-stone-700 placeholder:text-stone-400 focus:border-stone-400'
+            ? 'border-white/10 bg-stone-950/80 text-stone-100 placeholder:text-stone-500 focus:border-white/20'
+            : 'border-white/80 bg-white/62 text-stone-700 placeholder:text-stone-400 focus:border-white'
         }`}
         placeholder={labels.notePlaceholder}
       />
@@ -157,7 +157,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
       className={`mt-5 hidden w-full rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex lg:items-center lg:justify-center ${
         theme === 'dark'
           ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
-          : 'bg-stone-900 text-white hover:bg-stone-800'
+          : 'border border-white/85 bg-[rgba(255,255,255,0.7)] text-stone-900 hover:bg-[rgba(255,255,255,0.82)]'
       }`}
     >
       {isSubmitting ? labels.orderSending : labels.orderNow}

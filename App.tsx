@@ -242,7 +242,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_rgba(54,47,40,0.95),_rgba(28,24,21,0.92),_rgba(17,15,14,0.98))] text-stone-100' : 'bg-[radial-gradient(circle_at_top,_rgba(255,248,236,0.95),_rgba(242,234,220,0.82),_rgba(226,217,203,0.94)),linear-gradient(180deg,_#f4efe8_0%,_#ebe3d6_100%)] text-stone-900'}`}>
+    <div className={`ios-liquid-bg min-h-screen ${
+      theme === 'dark'
+        ? 'bg-[radial-gradient(circle_at_top,_rgba(53,62,86,0.52),_rgba(20,23,31,0.9),_rgba(10,12,18,0.98))] text-stone-100'
+        : 'bg-[linear-gradient(180deg,_rgba(247,243,236,0.94)_0%,_rgba(231,226,217,0.92)_58%,_rgba(219,222,228,0.84)_100%)] text-stone-900'
+    }`}>
+      <div className={`ios-grid ${theme === 'dark' ? 'opacity-10' : ''}`} />
+      <div className="ios-orb one" />
+      <div className="ios-orb two" />
+
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-4 pb-10 pt-4 sm:px-5 lg:px-6">
         <ShowroomHeader
           telegramUser={telegramUser}
@@ -423,10 +431,10 @@ const App: React.FC = () => {
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-[98] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-6">
-          <div className={`w-full rounded-t-[28px] border p-5 shadow-[0_30px_80px_rgba(0,0,0,0.3)] sm:max-w-lg sm:rounded-[30px] ${
+          <div className={`w-full rounded-t-[28px] border p-5 shadow-[0_30px_80px_rgba(0,0,0,0.3)] backdrop-blur-2xl sm:max-w-lg sm:rounded-[30px] ${
             theme === 'dark'
-              ? 'border-white/10 bg-[rgba(24,21,18,0.98)] text-stone-100'
-              : 'border-white/60 bg-[rgba(255,251,245,0.98)] text-stone-900'
+              ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(26,31,42,0.86),_rgba(18,21,29,0.72))] text-stone-100'
+              : 'border-white/70 bg-[linear-gradient(145deg,_rgba(255,255,255,0.72),_rgba(241,245,252,0.58))] text-stone-900'
           }`}>
             <div className="flex items-start justify-between gap-4">
               <div>
