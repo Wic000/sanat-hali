@@ -30,8 +30,10 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
 }) => {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomOrigin, setZoomOrigin] = useState('50% 50%');
   const tapRef = useRef({ time: 0, zone: '' });
   const pinchRef = useRef({ distance: 0, scale: 1 });
+  const modalImageRef = useRef<HTMLDivElement | null>(null);
 
   const getTouchDistance = (touches: React.TouchList) => {
     if (touches.length < 2) {
@@ -40,6 +42,17 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
 
     const [first, second] = [touches[0], touches[1]];
     return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+  };
+
+  const setOriginFromPoint = (clientX: number, clientY: number) => {
+    const bounds = modalImageRef.current?.getBoundingClientRect();
+    if (!bounds) {
+      return;
+    }
+
+    const x = Math.min(Math.max(((clientX - bounds.left) / bounds.width) * 100, 0), 100);
+    const y = Math.min(Math.max(((clientY - bounds.top) / bounds.height) * 100, 0), 100);
+    setZoomOrigin(`${x}% ${y}%`);
   };
 
   const zoomIn = () => setZoomLevel((value) => Math.min(value + 0.4, 4));
@@ -63,6 +76,10 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
     if (event.touches.length < 2) {
       return;
     }
+
+    const centerX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+    const centerY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+    setOriginFromPoint(centerX, centerY);
 
     pinchRef.current = {
       distance: getTouchDistance(event.touches),
@@ -212,11 +229,16 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
               theme === 'dark' ? 'border-white/10 bg-stone-950/70' : 'border-stone-200 bg-white'
             }`}>
               <div
+                ref={modalImageRef}
                 className="mx-auto origin-center touch-none"
-                onDoubleClick={() => handleQuickZoom('modal')}
+                onDoubleClick={(event) => {
+                  setOriginFromPoint(event.clientX, event.clientY);
+                  handleQuickZoom('modal');
+                }}
                 onTouchEnd={(event) => {
                   handlePinchEnd();
                   if (event.changedTouches.length === 1) {
+                    setOriginFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
                     handleQuickZoom('modal');
                   }
                 }}
@@ -225,7 +247,7 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
                 onTouchCancel={handlePinchEnd}
                 style={{
                   transform: `scale(${zoomLevel})`,
-                  transformOrigin: 'center center',
+                  transformOrigin: zoomOrigin,
                 }}
               >
                 <img src={selectedImage} alt={product.name} className="w-full rounded-[20px] object-cover" />
