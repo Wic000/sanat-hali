@@ -54,6 +54,7 @@ export interface RoomDimensions {
 export interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
+  requestContact?: (callback?: (shared: boolean) => void) => void;
   colorScheme?: ThemeMode;
   initDataUnsafe: {
     user?: TelegramUser;

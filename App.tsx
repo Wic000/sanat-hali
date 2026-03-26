@@ -23,7 +23,7 @@ const getInitialTelegramUser = (): TelegramUser | null =>
 
 const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
-  const telegramUser = getInitialTelegramUser();
+  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(() => getInitialTelegramUser());
 
   const [lang, setLang] = useState<AppLang>(() => {
     const saved = window.localStorage.getItem(LANG_STORAGE_KEY) as AppLang | null;
@@ -38,6 +38,8 @@ const App: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedSizeLabel, setSelectedSizeLabel] = useState('');
   const [note, setNote] = useState('');
+  const [isContactLoading, setIsContactLoading] = useState(false);
+  const [phoneStatusMessage, setPhoneStatusMessage] = useState('');
   const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
@@ -60,6 +62,15 @@ const App: React.FC = () => {
     tg?.ready();
     tg?.expand();
   }, [tg]);
+
+  useEffect(() => {
+    if (telegramUser?.phone_number) {
+      setPhoneStatusMessage(telegramUser.phone_number);
+      return;
+    }
+
+    setPhoneStatusMessage(t(lang, 'phoneConnectHint'));
+  }, [telegramUser?.phone_number, lang]);
 
   useEffect(() => {
     window.localStorage.setItem(LANG_STORAGE_KEY, lang);
@@ -210,6 +221,29 @@ const App: React.FC = () => {
     setSelectedSizeLabel(product.sizes[0].label);
   };
 
+  const handleRequestPhone = () => {
+    if (!tg?.requestContact) {
+      setPhoneStatusMessage(t(lang, 'phoneConnectUnsupported'));
+      return;
+    }
+
+    setIsContactLoading(true);
+    setPhoneStatusMessage(t(lang, 'phoneConnectPending'));
+
+    tg.requestContact((shared) => {
+      const latestUser = getInitialTelegramUser();
+      setTelegramUser(latestUser);
+      setIsContactLoading(false);
+
+      if (latestUser?.phone_number) {
+        setPhoneStatusMessage(latestUser.phone_number);
+        return;
+      }
+
+      setPhoneStatusMessage(shared ? t(lang, 'phoneConnectHint') : t(lang, 'phoneConnectDenied'));
+    });
+  };
+
   const handleClearSelection = () => {
     setSelectedProductId(null);
     setSelectedImage('');
@@ -272,11 +306,15 @@ const App: React.FC = () => {
                 selectedSizeLabel={selectedSize.label}
                 selectedPriceLabel={formatPrice(selectedPrice)}
                 note={note}
+                isContactLoading={isContactLoading}
+                hasPhone={Boolean(telegramUser?.phone_number)}
+                phoneStatusMessage={phoneStatusMessage}
                 isSubmitting={isSubmitting}
                 orderStatus={orderFeedback.status}
                 orderMessage={orderFeedback.message}
                 onSelectSize={setSelectedSizeLabel}
                 onChangeNote={setNote}
+                onRequestPhone={handleRequestPhone}
                 onSubmit={submitOrder}
                 labels={{
                   featured: t(lang, 'featured'),
@@ -288,6 +326,9 @@ const App: React.FC = () => {
                   specs: t(lang, 'specs'),
                   note: t(lang, 'note'),
                   notePlaceholder: t(lang, 'notePlaceholder'),
+                  connectPhone: t(lang, 'connectPhone'),
+                  phoneConnected: t(lang, 'phoneConnected'),
+                  phoneMissing: t(lang, 'phoneMissing'),
                   orderSending: t(lang, 'orderSending'),
                   orderNow: t(lang, 'orderNow'),
                 }}

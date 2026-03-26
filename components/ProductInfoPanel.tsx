@@ -6,11 +6,15 @@ interface ProductInfoPanelProps {
   selectedSizeLabel: string;
   selectedPriceLabel: string;
   note: string;
+  isContactLoading: boolean;
+  hasPhone: boolean;
+  phoneStatusMessage: string;
   isSubmitting: boolean;
   orderMessage: string;
   orderStatus: 'idle' | 'success' | 'error';
   onSelectSize: (sizeLabel: string) => void;
   onChangeNote: (value: string) => void;
+  onRequestPhone: () => void;
   onSubmit: () => void;
   labels: {
     featured: string;
@@ -22,6 +26,9 @@ interface ProductInfoPanelProps {
     specs: string;
     note: string;
     notePlaceholder: string;
+    connectPhone: string;
+    phoneConnected: string;
+    phoneMissing: string;
     orderSending: string;
     orderNow: string;
   };
@@ -33,11 +40,15 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
   selectedSizeLabel,
   selectedPriceLabel,
   note,
+  isContactLoading,
+  hasPhone,
+  phoneStatusMessage,
   isSubmitting,
   orderMessage,
   orderStatus,
   onSelectSize,
   onChangeNote,
+  onRequestPhone,
   onSubmit,
   labels,
   theme,
@@ -148,6 +159,31 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         }`}
         placeholder={labels.notePlaceholder}
       />
+    </div>
+
+    <div className={`mt-4 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+            {hasPhone ? labels.phoneConnected : labels.phoneMissing}
+          </div>
+          <div className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+            {phoneStatusMessage}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRequestPhone}
+          disabled={isContactLoading}
+          className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            theme === 'dark'
+              ? 'border-white/10 bg-stone-950 text-stone-100 hover:border-white/20'
+              : 'border-stone-200 bg-white text-stone-800 hover:border-stone-400'
+          }`}
+        >
+          {isContactLoading ? '...' : labels.connectPhone}
+        </button>
+      </div>
     </div>
 
     <button
