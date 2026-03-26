@@ -117,6 +117,16 @@ export const translations = {
   },
   close: { uz: 'Yopish', ru: 'Закрыть', en: 'Close' },
   previewReady: { uz: 'Zoom preview', ru: 'Zoom preview', en: 'Zoom preview' },
+  chooseCarpetFirst: {
+    uz: 'Avval kolleksiyadan gilam tanlang.',
+    ru: 'Сначала выберите ковер из коллекции.',
+    en: 'Select a carpet from the collection first.',
+  },
+  chooseCarpetHint: {
+    uz: "Pastdagi kolleksiyadan gilam tanlaganingizdan keyin tavsif, AI preview va buyurtma oynasi shu yerda chiqadi.",
+    ru: 'После выбора ковра из коллекции здесь появятся описание, AI preview и окно заказа.',
+    en: 'After you pick a carpet from the collection, the description, AI preview, and order area will appear here.',
+  },
   collection: { uz: 'Kolleksiya', ru: 'Коллекция', en: 'Collection' },
   supportingGallery: { uz: "Qo'shimcha gallery", ru: 'Дополнительная галерея', en: 'Supporting gallery' },
   models: { uz: 'model', ru: 'моделей', en: 'models' },

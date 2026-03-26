@@ -3,7 +3,7 @@ import { Product, ThemeMode } from '../types';
 
 interface ProductRailProps {
   products: Product[];
-  selectedProductId: string;
+  selectedProductId: string | null;
   formatPrice: (value: number) => string;
   onSelect: (product: Product) => void;
   collectionLabel: string;

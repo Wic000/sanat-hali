@@ -34,9 +34,9 @@ const App: React.FC = () => {
     return saved || tg?.colorScheme || 'light';
   });
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedProductId, setSelectedProductId] = useState(DEFAULT_PRODUCTS[0].id);
-  const [selectedImage, setSelectedImage] = useState(DEFAULT_PRODUCTS[0].images[0]);
-  const [selectedSizeLabel, setSelectedSizeLabel] = useState(DEFAULT_PRODUCTS[0].sizes[0].label);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [selectedSizeLabel, setSelectedSizeLabel] = useState('');
   const [note, setNote] = useState('');
   const [phone, setPhone] = useState(telegramUser?.phone_number ?? '');
   const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
@@ -95,15 +95,22 @@ const App: React.FC = () => {
   }, [selectedCategory, lang]);
 
   const selectedProduct = useMemo(() => {
+    if (!selectedProductId) {
+      return null;
+    }
+
     return (
       filteredProducts.find((product) => product.id === selectedProductId) ||
       DEFAULT_PRODUCTS.map((product) => localizeProduct(product, lang)).find((product) => product.id === selectedProductId) ||
-      filteredProducts[0] ||
-      localizeProduct(DEFAULT_PRODUCTS[0], lang)
+      null
     );
   }, [filteredProducts, selectedProductId, lang]);
 
   useEffect(() => {
+    if (!selectedProduct) {
+      return;
+    }
+
     setSelectedImage(selectedProduct.images[0]);
     setSelectedSizeLabel((current) => {
       const existing = selectedProduct.sizes.find((size) => size.label === current);
@@ -112,10 +119,11 @@ const App: React.FC = () => {
     setDemoPreviewApplied(false);
   }, [selectedProduct]);
 
-  const selectedSize =
-    selectedProduct.sizes.find((size) => size.label === selectedSizeLabel) || selectedProduct.sizes[0];
-  const selectedPrice = Math.round(selectedProduct.basePrice * selectedSize.multiplier);
-  const selectedGallery = selectedProduct.images.slice(0, 5);
+  const selectedSize = selectedProduct
+    ? selectedProduct.sizes.find((size) => size.label === selectedSizeLabel) || selectedProduct.sizes[0]
+    : null;
+  const selectedPrice = selectedProduct && selectedSize ? Math.round(selectedProduct.basePrice * selectedSize.multiplier) : 0;
+  const selectedGallery = selectedProduct ? selectedProduct.images.slice(0, 5) : [];
 
   const adminSummary = useMemo(() => {
     const visibleProducts = DEFAULT_PRODUCTS.filter((product) => product.visible !== false).length;
@@ -145,7 +153,7 @@ const App: React.FC = () => {
   };
 
   const submitOrder = async () => {
-    if (isSubmitting) {
+    if (isSubmitting || !selectedProduct || !selectedSize) {
       return;
     }
 
@@ -249,90 +257,127 @@ const App: React.FC = () => {
         />
 
         <main className="grid gap-4 lg:grid-cols-[0.92fr_1.2fr_0.95fr] lg:items-start">
-          <ProductInfoPanel
-            product={selectedProduct}
-            selectedSizeLabel={selectedSize.label}
-            selectedPriceLabel={formatPrice(selectedPrice)}
-            note={note}
-            phone={phone}
-            isSubmitting={isSubmitting}
-            orderStatus={orderFeedback.status}
-            orderMessage={orderFeedback.message}
-            onSelectSize={setSelectedSizeLabel}
-            onChangeNote={setNote}
-            onChangePhone={setPhone}
-            onSubmit={submitOrder}
-            labels={{
-              featured: t(lang, 'featured'),
-              aiAction: t(lang, 'aiPreviewDemo'),
-              orderAction: t(lang, 'orderNow'),
-              price: t(lang, 'price'),
-              sizes: t(lang, 'sizes'),
-              description: t(lang, 'description'),
-              specs: t(lang, 'specs'),
-              note: t(lang, 'note'),
-              notePlaceholder: t(lang, 'notePlaceholder'),
-              phone: t(lang, 'phone'),
-              orderSending: t(lang, 'orderSending'),
-              orderNow: t(lang, 'orderNow'),
-            }}
-            theme={theme}
-          />
+          {selectedProduct && selectedSize ? (
+            <>
+              <ProductInfoPanel
+                product={selectedProduct}
+                selectedSizeLabel={selectedSize.label}
+                selectedPriceLabel={formatPrice(selectedPrice)}
+                note={note}
+                phone={phone}
+                isSubmitting={isSubmitting}
+                orderStatus={orderFeedback.status}
+                orderMessage={orderFeedback.message}
+                onSelectSize={setSelectedSizeLabel}
+                onChangeNote={setNote}
+                onChangePhone={setPhone}
+                onSubmit={submitOrder}
+                labels={{
+                  featured: t(lang, 'featured'),
+                  aiAction: t(lang, 'aiPreviewDemo'),
+                  orderAction: t(lang, 'orderNow'),
+                  price: t(lang, 'price'),
+                  sizes: t(lang, 'sizes'),
+                  description: t(lang, 'description'),
+                  specs: t(lang, 'specs'),
+                  note: t(lang, 'note'),
+                  notePlaceholder: t(lang, 'notePlaceholder'),
+                  phone: t(lang, 'phone'),
+                  orderSending: t(lang, 'orderSending'),
+                  orderNow: t(lang, 'orderNow'),
+                }}
+                theme={theme}
+              />
 
-          <ProductGalleryPanel
-            product={selectedProduct}
-            selectedImage={selectedImage}
-            gallery={selectedGallery}
-            onSelectImage={setSelectedImage}
-            zoomLabel={t(lang, 'previewReady')}
-            theme={theme}
-          />
+              <ProductGalleryPanel
+                product={selectedProduct}
+                selectedImage={selectedImage}
+                gallery={selectedGallery}
+                onSelectImage={setSelectedImage}
+                zoomLabel={t(lang, 'previewReady')}
+                theme={theme}
+              />
 
-          <RoomPreviewPanel
-            product={selectedProduct}
-            roomImage={roomImage}
-            roomPlacementMode={roomPlacementMode}
-            roomDimensions={roomDimensions}
-            demoPreviewApplied={demoPreviewApplied}
-            isOpen={showRoomPreview}
-            onOpen={() => setShowRoomPreview(true)}
-            onClose={() => setShowRoomPreview(false)}
-            onUpload={handleRoomUpload}
-            onModeChange={(mode) => {
-              setRoomPlacementMode(mode);
-              setDemoPreviewApplied(false);
-            }}
-            onDimensionsChange={setRoomDimensions}
-            onApply={() => setDemoPreviewApplied(true)}
-            labels={{
-              roomPreview: t(lang, 'roomPreview'),
-              aiPreviewDemo: t(lang, 'aiPreviewDemo'),
-              demoReady: t(lang, 'demoReady'),
-              roomUploadHint: t(lang, 'roomUploadHint'),
-              uploadRoomCta: t(lang, 'uploadRoomCta'),
-              centerPlacement: t(lang, 'centerPlacement'),
-              centerPlacementHint: t(lang, 'centerPlacementHint'),
-              fullCoverage: t(lang, 'fullCoverage'),
-              fullCoverageHint: t(lang, 'fullCoverageHint'),
-              roomWidth: t(lang, 'roomWidth'),
-              roomHeight: t(lang, 'roomHeight'),
-              applyPreview: t(lang, 'applyPreview'),
-              aiBlock: t(lang, 'aiBlock'),
-              aiBlockHint: t(lang, 'aiBlockHint'),
-              openPreview: t(lang, 'openPreview'),
-              openPreviewHint: t(lang, 'openPreviewHint'),
-              close: t(lang, 'close'),
-              takeRoomShot: t(lang, 'takeRoomShot'),
-            }}
-            theme={theme}
-          />
+              <RoomPreviewPanel
+                product={selectedProduct}
+                roomImage={roomImage}
+                roomPlacementMode={roomPlacementMode}
+                roomDimensions={roomDimensions}
+                demoPreviewApplied={demoPreviewApplied}
+                isOpen={showRoomPreview}
+                onOpen={() => setShowRoomPreview(true)}
+                onClose={() => setShowRoomPreview(false)}
+                onUpload={handleRoomUpload}
+                onModeChange={(mode) => {
+                  setRoomPlacementMode(mode);
+                  setDemoPreviewApplied(false);
+                }}
+                onDimensionsChange={setRoomDimensions}
+                onApply={() => setDemoPreviewApplied(true)}
+                labels={{
+                  roomPreview: t(lang, 'roomPreview'),
+                  aiPreviewDemo: t(lang, 'aiPreviewDemo'),
+                  demoReady: t(lang, 'demoReady'),
+                  roomUploadHint: t(lang, 'roomUploadHint'),
+                  uploadRoomCta: t(lang, 'uploadRoomCta'),
+                  centerPlacement: t(lang, 'centerPlacement'),
+                  centerPlacementHint: t(lang, 'centerPlacementHint'),
+                  fullCoverage: t(lang, 'fullCoverage'),
+                  fullCoverageHint: t(lang, 'fullCoverageHint'),
+                  roomWidth: t(lang, 'roomWidth'),
+                  roomHeight: t(lang, 'roomHeight'),
+                  applyPreview: t(lang, 'applyPreview'),
+                  aiBlock: t(lang, 'aiBlock'),
+                  aiBlockHint: t(lang, 'aiBlockHint'),
+                  openPreview: t(lang, 'openPreview'),
+                  openPreviewHint: t(lang, 'openPreviewHint'),
+                  close: t(lang, 'close'),
+                  takeRoomShot: t(lang, 'takeRoomShot'),
+                }}
+                theme={theme}
+              />
+            </>
+          ) : (
+            <section className={`rounded-[30px] border p-5 shadow-[0_18px_70px_rgba(88,63,37,0.1)] backdrop-blur-xl lg:col-span-3 ${
+              theme === 'dark'
+                ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
+                : 'border-white/60 bg-[rgba(255,251,245,0.72)]'
+            }`}>
+              <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+                <div>
+                  <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{t(lang, 'collection')}</p>
+                  <h2 className={`mt-2 font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{t(lang, 'chooseCarpetFirst')}</h2>
+                  <p className={`mt-3 max-w-2xl text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{t(lang, 'chooseCarpetHint')}</p>
+                </div>
+                <div className={`grid gap-3 rounded-[26px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-900/6 bg-white/70'} sm:grid-cols-3`}>
+                  {filteredProducts.slice(0, 3).map((product) => (
+                    <button
+                      key={`hero-${product.id}`}
+                      type="button"
+                      onClick={() => handleSelectProduct(product)}
+                      className={`overflow-hidden rounded-[20px] border text-left transition ${
+                        theme === 'dark'
+                          ? 'border-white/10 bg-stone-950/60 hover:border-white/20'
+                          : 'border-white/80 bg-white hover:border-stone-300'
+                      }`}
+                    >
+                      <img src={product.images[0]} alt={product.name} className="aspect-square w-full object-cover" />
+                      <div className={`px-3 py-2 text-xs font-semibold ${theme === 'dark' ? 'text-stone-200' : 'text-stone-700'}`}>
+                        {product.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </main>
 
         <section className="mt-4 lg:hidden">
           <button
             type="button"
             onClick={submitOrder}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !selectedProduct}
             className={`w-full rounded-[24px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
               theme === 'dark'
                 ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
@@ -356,7 +401,7 @@ const App: React.FC = () => {
 
         <ProductRail
           products={filteredProducts}
-          selectedProductId={selectedProduct.id}
+          selectedProductId={selectedProduct?.id || null}
           formatPrice={formatPrice}
           onSelect={handleSelectProduct}
           collectionLabel={t(lang, 'collection')}
