@@ -263,7 +263,6 @@ const App: React.FC = () => {
             onChangePhone={setPhone}
             onSubmit={submitOrder}
             labels={{
-              selectedCarpet: t(lang, 'selectedCarpet'),
               featured: t(lang, 'featured'),
               aiAction: t(lang, 'aiPreviewDemo'),
               orderAction: t(lang, 'orderNow'),

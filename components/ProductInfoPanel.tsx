@@ -15,7 +15,6 @@ interface ProductInfoPanelProps {
   onChangePhone: (value: string) => void;
   onSubmit: () => void;
   labels: {
-    selectedCarpet: string;
     featured: string;
     aiAction: string;
     orderAction: string;
@@ -55,10 +54,9 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
   }`}>
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.selectedCarpet}</p>
-        <h2 className={`mt-2 font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{product.name}</h2>
+        <h2 className={`font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{product.name}</h2>
         <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{product.category}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
             theme === 'dark'
               ? 'border-blue-200/20 bg-blue-200/10 text-blue-100'
