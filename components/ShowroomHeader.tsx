@@ -32,9 +32,9 @@ const getAvatarLetter = (telegramUser: TelegramUser | null) => {
 };
 
 const getLanguageFlag = (lang: AppLang) => {
-  if (lang === 'ru') return 'RU';
-  if (lang === 'en') return 'EN';
-  return 'UZ';
+  if (lang === 'ru') return '🇷🇺';
+  if (lang === 'en') return '🇺🇸';
+  return '🇺🇿';
 };
 
 const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
