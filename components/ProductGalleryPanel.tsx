@@ -29,24 +29,61 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
   theme,
 }) => {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1.8);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const tapRef = useRef({ time: 0, zone: '' });
+  const pinchRef = useRef({ distance: 0, scale: 1 });
+
+  const getTouchDistance = (touches: React.TouchList) => {
+    if (touches.length < 2) {
+      return 0;
+    }
+
+    const [first, second] = [touches[0], touches[1]];
+    return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+  };
 
   const zoomIn = () => setZoomLevel((value) => Math.min(value + 0.4, 4));
   const zoomOut = () => setZoomLevel((value) => Math.max(value - 0.4, 1));
-  const toggleQuickZoom = () => setZoomLevel((value) => (value < 2.8 ? 3.2 : 1.8));
+  const toggleQuickZoom = () => setZoomLevel((value) => (value < 2.2 ? 2.8 : 1));
 
   const handleQuickZoom = (zone: 'preview' | 'modal') => {
     const now = Date.now();
     if (now - tapRef.current.time < 320 && tapRef.current.zone === zone) {
       if (!isZoomOpen) {
         setIsZoomOpen(true);
-        setZoomLevel(3.2);
+        setZoomLevel(2.8);
       } else {
         toggleQuickZoom();
       }
     }
     tapRef.current = { time: now, zone };
+  };
+
+  const handlePinchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2) {
+      return;
+    }
+
+    pinchRef.current = {
+      distance: getTouchDistance(event.touches),
+      scale: zoomLevel,
+    };
+  };
+
+  const handlePinchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2 || pinchRef.current.distance === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const distance = getTouchDistance(event.touches);
+    const nextScale = pinchRef.current.scale * (distance / pinchRef.current.distance);
+    setZoomLevel(Math.min(Math.max(nextScale, 1), 4));
+  };
+
+  const handlePinchEnd = () => {
+    pinchRef.current = { distance: 0, scale: zoomLevel };
   };
 
   return (
@@ -175,12 +212,20 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
               theme === 'dark' ? 'border-white/10 bg-stone-950/70' : 'border-stone-200 bg-white'
             }`}>
               <div
-                className="mx-auto"
+                className="mx-auto origin-center touch-none"
                 onDoubleClick={() => handleQuickZoom('modal')}
-                onTouchEnd={() => handleQuickZoom('modal')}
+                onTouchEnd={(event) => {
+                  handlePinchEnd();
+                  if (event.changedTouches.length === 1) {
+                    handleQuickZoom('modal');
+                  }
+                }}
+                onTouchStart={handlePinchStart}
+                onTouchMove={handlePinchMove}
+                onTouchCancel={handlePinchEnd}
                 style={{
-                  width: `${zoomLevel * 100}%`,
-                  minWidth: `${zoomLevel * 100}%`,
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: 'center center',
                 }}
               >
                 <img src={selectedImage} alt={product.name} className="w-full rounded-[20px] object-cover" />
