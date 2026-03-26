@@ -54,27 +54,27 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
   const displayUsername = telegramUser?.username ? `@${telegramUser.username}` : usernameMissingLabel;
 
   return (
-  <header className={`mb-4 rounded-[28px] border px-4 py-4 shadow-[0_18px_60px_rgba(90,65,40,0.12)] backdrop-blur-xl sm:px-5 ${
+  <header className={`mb-3 rounded-[24px] border px-3 py-3 shadow-[0_18px_60px_rgba(90,65,40,0.12)] backdrop-blur-xl sm:mb-4 sm:px-5 sm:py-4 ${
     theme === 'dark'
       ? 'border-white/10 bg-[rgba(28,24,21,0.82)]'
       : 'border-white/60 bg-[rgba(255,252,247,0.7)]'
   }`}>
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
-        <div className={`mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] ${
+        <div className={`mb-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] sm:px-3 sm:text-[11px] ${
           theme === 'dark'
             ? 'border-amber-200/20 bg-white/5 text-amber-100/80'
             : 'border-amber-200/70 bg-white/60 text-amber-900/70'
         }`}>
           {appBadge}
         </div>
-        <h1 className={`font-display text-3xl leading-none sm:text-4xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>Sanat Hali</h1>
-        <p className={`mt-2 max-w-2xl text-sm sm:text-base ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{subtitle}</p>
+        <h1 className={`font-display text-[2.1rem] leading-none sm:text-4xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>Sanat Hali</h1>
+        <p className={`mt-1 max-w-2xl text-xs sm:mt-2 sm:text-base ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{subtitle}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className={`flex items-center gap-3 rounded-2xl border px-2.5 py-2 shadow-sm ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-bold ${
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+        <div className={`flex min-w-0 items-center gap-2 rounded-2xl border px-2 py-2 shadow-sm ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-bold ${
             theme === 'dark'
               ? 'border-white/10 bg-stone-900 text-stone-100'
               : 'border-stone-200 bg-white text-stone-800'
@@ -90,9 +90,6 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
             )}
           </div>
           <div className="min-w-0">
-            <div className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-500' : 'text-stone-500'}`}>
-              {customerLabel}
-            </div>
             <div className={`truncate text-sm font-semibold ${theme === 'dark' ? 'text-stone-100' : 'text-stone-800'}`}>
               {displayName}
             </div>
@@ -102,8 +99,8 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
           </div>
         </div>
 
-        <div className={`flex items-center gap-2 rounded-2xl border px-3 py-2 shadow-sm ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
-          <span className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{languageLabel}</span>
+        <div className={`flex items-center justify-end gap-2 rounded-2xl border px-2 py-2 shadow-sm sm:justify-start sm:px-3 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/65'}`}>
+          <span className={`hidden text-[11px] font-semibold uppercase tracking-[0.22em] sm:inline ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{languageLabel}</span>
           <select
             value={lang}
             onChange={(event) => onChangeLang(event.target.value as AppLang)}
@@ -115,31 +112,35 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-            theme === 'dark'
-              ? 'border-white/10 bg-white/5 text-stone-100 hover:bg-white/10'
-              : 'border-stone-900/10 bg-stone-900 text-white hover:bg-stone-800'
-          }`}
-        >
-          {themeLabel}
-        </button>
-
-        {isAdmin && (
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <button
             type="button"
-            onClick={onToggleAdmin}
-            className={`rounded-2xl border px-4 py-3 text-sm font-semibold shadow-[0_12px_24px_rgba(28,25,23,0.2)] transition ${
+            onClick={onToggleTheme}
+            className={`rounded-2xl border px-3 py-2.5 text-sm font-semibold transition sm:px-4 sm:py-3 ${
               theme === 'dark'
-                ? 'border-amber-200/20 bg-amber-100 text-stone-900 hover:bg-amber-50'
+                ? 'border-white/10 bg-white/5 text-stone-100 hover:bg-white/10'
                 : 'border-stone-900/10 bg-stone-900 text-white hover:bg-stone-800'
             }`}
           >
-            {showAdminPanel ? adminCloseLabel : adminOpenLabel}
+            <span className="sm:hidden">{theme === 'light' ? '☀' : '☾'}</span>
+            <span className="hidden sm:inline">{themeLabel}</span>
           </button>
-        )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onToggleAdmin}
+              className={`rounded-2xl border px-3 py-2.5 text-sm font-semibold shadow-[0_12px_24px_rgba(28,25,23,0.2)] transition sm:px-4 sm:py-3 ${
+                theme === 'dark'
+                  ? 'border-amber-200/20 bg-amber-100 text-stone-900 hover:bg-amber-50'
+                  : 'border-stone-900/10 bg-stone-900 text-white hover:bg-stone-800'
+              }`}
+            >
+              <span className="sm:hidden">{showAdminPanel ? 'Admin' : 'Admin'}</span>
+              <span className="hidden sm:inline">{showAdminPanel ? adminCloseLabel : adminOpenLabel}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   </header>
