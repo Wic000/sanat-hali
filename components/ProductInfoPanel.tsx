@@ -54,13 +54,6 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         <div className="mt-4 flex flex-wrap gap-2">
           <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
             theme === 'dark'
-              ? 'border-blue-200/20 bg-blue-200/10 text-blue-100'
-              : 'border-blue-200 bg-blue-50 text-blue-700'
-          }`}>
-            {labels.aiAction}
-          </span>
-          <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-            theme === 'dark'
               ? 'border-emerald-200/20 bg-emerald-200/10 text-emerald-100'
               : 'border-emerald-200 bg-emerald-50 text-emerald-700'
           }`}>
