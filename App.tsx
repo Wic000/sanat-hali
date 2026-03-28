@@ -627,6 +627,7 @@ const App: React.FC = () => {
               product={selectedProduct}
               roomImage={roomImage}
               generatedPreviewImage={generatedRoomPreview?.image || null}
+              previewProvider={generatedRoomPreview?.provider || null}
               roomPlacementMode={roomPlacementMode}
               roomDimensions={roomDimensions}
               isOpen={showRoomPreview}

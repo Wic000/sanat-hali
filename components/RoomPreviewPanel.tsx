@@ -5,6 +5,7 @@ interface RoomPreviewPanelProps {
   product: Product;
   roomImage: string | null;
   generatedPreviewImage: string | null;
+  previewProvider: string | null;
   roomPlacementMode: RoomPlacementMode;
   roomDimensions: RoomDimensions;
   isOpen: boolean;
@@ -45,6 +46,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
   product,
   roomImage,
   generatedPreviewImage,
+  previewProvider,
   roomPlacementMode,
   roomDimensions,
   isOpen,
@@ -158,6 +160,11 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
               }`}
             >
               <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22440%22 viewBox=%220 0 320 440%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22 y1=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%23f6efe5%22/%3E%3Cstop offset=%221%22 stop-color=%22%23e0d4c4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22440%22 fill=%22url(%23g)%22/%3E%3Crect x=%2234%22 y=%2248%22 width=%22252%22 height=%22126%22 rx=%2222%22 fill=%22%23ffffff%22 fill-opacity=%220.45%22/%3E%3Crect x=%2256%22 y=%22238%22 width=%22212%22 height=%2290%22 rx=%2216%22 fill=%22%23d8c1a3%22 fill-opacity=%220.42%22/%3E%3Crect x=%2280%22 y=%22334%22 width=%22158%22 height=%2248%22 rx=%2214%22 fill=%22%23ece3d7%22 fill-opacity=%220.72%22/%3E%3C/svg%3E')] bg-cover bg-center">
+                {generatedPreviewImage && previewProvider && (
+                  <div className="absolute left-3 top-3 z-10 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-xl">
+                    {previewProvider === 'huggingface' ? 'Hugging Face' : 'Fallback'}
+                  </div>
+                )}
                 {generatedPreviewImage ? (
                   <img src={generatedPreviewImage} alt={`${product.name} AI preview`} className="absolute inset-0 h-full w-full object-cover" />
                 ) : roomImage ? (
