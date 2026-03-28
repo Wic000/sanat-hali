@@ -12,6 +12,7 @@ import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory }
 import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
+const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -354,28 +355,6 @@ const App: React.FC = () => {
       setRoomImage(resizedImage);
       setGeneratedRoomPreview(null);
       setRoomPreviewError('');
-      if (selectedProduct) {
-        setIsGeneratingRoomPreview(true);
-
-        try {
-          const previewImage = await createLocalRoomPreview({
-            roomImage: resizedImage,
-            rugImage: selectedImage || selectedProduct.images[0],
-            placementMode: roomPlacementMode,
-          });
-          tg?.HapticFeedback?.notificationOccurred?.('success');
-          setGeneratedRoomPreview({
-            image: previewImage,
-            provider: 'local-preview',
-          });
-        } catch (previewError) {
-          tg?.HapticFeedback?.notificationOccurred?.('error');
-          setGeneratedRoomPreview(null);
-          setRoomPreviewError(previewError instanceof Error ? previewError.message : t(lang, 'previewError'));
-        } finally {
-          setIsGeneratingRoomPreview(false);
-        }
-      }
     } catch (error) {
       setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
     }
@@ -395,20 +374,62 @@ const App: React.FC = () => {
     setRoomPreviewError('');
 
     try {
-      const previewImage = await createLocalRoomPreview({
+      const basePreviewImage = await createLocalRoomPreview({
         roomImage,
         rugImage: selectedImage || selectedProduct.images[0],
         placementMode: roomPlacementMode,
       });
+
+      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          basePreviewImage,
+          productName: selectedProduct.name,
+          placementMode: roomPlacementMode,
+          roomWidth: roomDimensions.width,
+          roomHeight: roomDimensions.height,
+        }),
+      });
+
+      const result = await parseJsonResponse(response);
+
+      if (!response.ok || !result?.image) {
+        throw new Error(result?.error || t(lang, 'previewError'));
+      }
+
       tg?.HapticFeedback?.notificationOccurred?.('success');
       setGeneratedRoomPreview({
-        image: previewImage,
-        provider: 'local-preview',
+        image: result.image,
+        provider: result.provider || 'huggingface',
       });
     } catch (error) {
-      tg?.HapticFeedback?.notificationOccurred?.('error');
-      setGeneratedRoomPreview(null);
-      setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
+      try {
+        const fallbackPreview = await createLocalRoomPreview({
+          roomImage,
+          rugImage: selectedImage || selectedProduct.images[0],
+          placementMode: roomPlacementMode,
+        });
+
+        tg?.HapticFeedback?.notificationOccurred?.('warning');
+        setGeneratedRoomPreview({
+          image: fallbackPreview,
+          provider: 'local-preview',
+        });
+        setRoomPreviewError(
+          error instanceof Error
+            ? `${t(lang, 'previewError')} ${error.message}`
+            : t(lang, 'previewError')
+        );
+      } catch (fallbackError) {
+        tg?.HapticFeedback?.notificationOccurred?.('error');
+        setGeneratedRoomPreview(null);
+        setRoomPreviewError(
+          fallbackError instanceof Error ? fallbackError.message : t(lang, 'previewError')
+        );
+      }
     } finally {
       setIsGeneratingRoomPreview(false);
     }

@@ -1,38 +1,23 @@
-const OPENAI_API_URL = 'https://api.openai.com/v1/images/edits';
+import { InferenceClient } from '@huggingface/inference';
+
+const DEFAULT_MODEL = 'black-forest-labs/FLUX.1-Kontext-Dev';
 
 const dataUrlToBlob = async (dataUrl) => {
   const response = await fetch(dataUrl);
 
   if (!response.ok) {
-    throw new Error('Failed to read uploaded room image');
+    throw new Error('Failed to read preview image');
   }
 
   return response.blob();
 };
 
-const absoluteImageUrl = (req, imagePath) => {
-  if (!imagePath) {
-    return '';
-  }
+const blobToDataUrl = async (blob) => {
+  const arrayBuffer = await blob.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+  const mimeType = blob.type || 'image/png';
 
-  if (/^https?:\/\//i.test(imagePath) || imagePath.startsWith('data:')) {
-    return imagePath;
-  }
-
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-
-  return `${protocol}://${host}${imagePath.startsWith('/') ? imagePath : `/${imagePath}`}`;
-};
-
-const fetchImageAsBlob = async (url) => {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch carpet image');
-  }
-
-  return response.blob();
+  return `data:${mimeType};base64,${base64}`;
 };
 
 export default async function handler(req, res) {
@@ -41,74 +26,64 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const accessToken = process.env.HF_ACCESS_TOKEN;
 
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
+    if (!accessToken) {
+      return res.status(500).json({ error: 'Missing HF_ACCESS_TOKEN' });
     }
 
     const {
-      roomImage,
-      rugImage,
+      basePreviewImage,
       productName,
       placementMode = 'center',
       roomWidth,
       roomHeight,
     } = req.body || {};
 
-    if (!roomImage || !rugImage || !productName) {
-      return res.status(400).json({ error: 'Missing room image, rug image, or product name' });
+    if (!basePreviewImage || !productName) {
+      return res.status(400).json({ error: 'Missing base preview image or product name' });
     }
 
-    const roomBlob = await dataUrlToBlob(roomImage);
-    const rugBlob = await fetchImageAsBlob(absoluteImageUrl(req, rugImage));
-
-    const formData = new FormData();
-    formData.append('model', process.env.OPENAI_ROOM_PREVIEW_MODEL || 'gpt-image-1');
-    formData.append(
-      'prompt',
-      [
-        `Create a photorealistic interior preview using the provided room photo and the provided carpet product image named "${productName}".`,
-        `Keep the uploaded room composition, furniture, walls, and lighting as realistic as possible.`,
-        `Place the carpet on the visible floor in ${placementMode === 'coverage' ? 'a larger room-covering layout' : 'a centered focal layout'}.`,
-        `Use realistic perspective, scale, and soft floor contact shadows.`,
-        `Do not change the carpet pattern or invent a new design.`,
-        `Room size reference: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
-        'Return a polished premium showroom-style preview image.',
-      ].join(' ')
-    );
-    formData.append('size', '1024x1536');
-    formData.append('quality', 'medium');
-    formData.append('input_fidelity', 'high');
-    formData.append('image[]', roomBlob, 'room.jpg');
-    formData.append('image[]', rugBlob, 'rug.png');
-
-    const openAiResponse = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
+    const client = new InferenceClient(accessToken);
+    const previewBlob = await dataUrlToBlob(basePreviewImage);
+    const resultBlob = await client.imageToImage({
+      provider: 'hf-inference',
+      model: process.env.HF_ROOM_PREVIEW_MODEL || DEFAULT_MODEL,
+      inputs: previewBlob,
+      parameters: {
+        prompt: [
+          `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
+          'Keep the exact room layout, camera angle, furniture placement, and wall colors from the input image.',
+          'Keep the carpet pattern, border design, and palette recognizable from the input preview.',
+          `Make the carpet feel naturally placed on the floor in a ${placementMode === 'coverage' ? 'larger room-covering' : 'centered focal'} layout.`,
+          'Blend the rug with realistic floor contact shadows, perspective, and lighting so it no longer looks pasted on top.',
+          'Do not remove the carpet, do not replace it with another object, and do not change the room into a different location.',
+          `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
+        ].join(' '),
+        negative_prompt: [
+          'floating carpet',
+          'tiny rug',
+          'blank floor',
+          'missing rug',
+          'extra furniture',
+          'warped room',
+          'cropped carpet',
+          'text',
+          'watermark',
+        ].join(', '),
+        guidance_scale: 6,
+        num_inference_steps: 18,
+        target_size: {
+          width: 768,
+          height: 1024,
+        },
       },
-      body: formData,
     });
-
-    const payload = await openAiResponse.json();
-
-    if (!openAiResponse.ok) {
-      return res.status(openAiResponse.status).json({
-        error: payload?.error?.message || 'OpenAI image edit request failed',
-      });
-    }
-
-    const base64Image = payload?.data?.[0]?.b64_json;
-
-    if (!base64Image) {
-      return res.status(500).json({ error: 'OpenAI did not return an image preview' });
-    }
 
     return res.status(200).json({
       ok: true,
-      provider: 'openai',
-      image: `data:image/png;base64,${base64Image}`,
+      provider: 'huggingface',
+      image: await blobToDataUrl(resultBlob),
     });
   } catch (error) {
     return res.status(500).json({
