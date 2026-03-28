@@ -47,7 +47,6 @@ export default async function handler(req, res) {
     const client = new InferenceClient(accessToken);
     const previewBlob = await dataUrlToBlob(basePreviewImage);
     const resultBlob = await client.imageToImage({
-      provider: 'hf-inference',
       model: process.env.HF_ROOM_PREVIEW_MODEL || DEFAULT_MODEL,
       inputs: previewBlob,
       parameters: {
