@@ -12,7 +12,6 @@ import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory }
 import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
-const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -69,6 +68,89 @@ const resizeImageDataUrl = (source: string, maxSide = 1280) =>
     image.onerror = () => reject(new Error('Failed to load image'));
     image.src = source;
   });
+
+const loadImageElement = (source: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Failed to load image asset'));
+    image.src = source;
+  });
+
+const createLocalRoomPreview = async ({
+  roomImage,
+  rugImage,
+  placementMode,
+}: {
+  roomImage: string;
+  rugImage: string;
+  placementMode: RoomPlacementMode;
+}) => {
+  const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
+  const canvas = document.createElement('canvas');
+  canvas.width = room.width;
+  canvas.height = room.height;
+
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('Canvas context unavailable');
+  }
+
+  context.drawImage(room, 0, 0, canvas.width, canvas.height);
+
+  const destTop = placementMode === 'coverage' ? Math.round(canvas.height * 0.52) : Math.round(canvas.height * 0.58);
+  const destBottom = placementMode === 'coverage' ? Math.round(canvas.height * 0.95) : Math.round(canvas.height * 0.88);
+  const destHeight = Math.max(40, destBottom - destTop);
+  const topWidth = placementMode === 'coverage' ? canvas.width * 0.46 : canvas.width * 0.28;
+  const bottomWidth = placementMode === 'coverage' ? canvas.width * 0.92 : canvas.width * 0.56;
+  const centerX = canvas.width * 0.5;
+
+  context.save();
+  context.globalAlpha = 0.2;
+  context.filter = `blur(${Math.max(8, Math.round(canvas.width * 0.012))}px)`;
+  context.beginPath();
+  context.ellipse(centerX, destBottom - destHeight * 0.06, bottomWidth * 0.42, destHeight * 0.11, 0, 0, Math.PI * 2);
+  context.fillStyle = '#000000';
+  context.fill();
+  context.restore();
+
+  context.save();
+
+  for (let y = 0; y < destHeight; y += 1) {
+    const progress = y / destHeight;
+    const sliceWidth = topWidth + (bottomWidth - topWidth) * progress;
+    const sliceHeight = Math.max(1, 1 + progress * 0.35);
+    const left = centerX - sliceWidth / 2;
+    const sourceY = Math.floor((y / destHeight) * rug.height);
+
+    context.drawImage(
+      rug,
+      0,
+      sourceY,
+      rug.width,
+      1,
+      left,
+      destTop + y,
+      sliceWidth,
+      sliceHeight
+    );
+  }
+
+  context.globalAlpha = 0.1;
+  context.fillStyle = '#ffffff';
+  context.beginPath();
+  context.moveTo(centerX - topWidth * 0.48, destTop + 2);
+  context.lineTo(centerX + topWidth * 0.48, destTop + 2);
+  context.lineTo(centerX + bottomWidth * 0.44, destBottom - 8);
+  context.lineTo(centerX - bottomWidth * 0.44, destBottom - 8);
+  context.closePath();
+  context.fill();
+  context.restore();
+
+  return canvas.toDataURL('image/jpeg', 0.92);
+};
 
 const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
@@ -222,31 +304,15 @@ const App: React.FC = () => {
     setRoomPreviewError('');
 
     try {
-      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomImage,
-          rugImage: selectedImage || selectedProduct.images[0],
-          productName: selectedProduct.name,
-          placementMode: roomPlacementMode,
-          roomWidth: roomDimensions.width,
-          roomHeight: roomDimensions.height,
-        }),
+      const previewImage = await createLocalRoomPreview({
+        roomImage,
+        rugImage: selectedImage || selectedProduct.images[0],
+        placementMode: roomPlacementMode,
       });
-
-      const result = await parseJsonResponse(response);
-
-      if (!response.ok || !result?.image) {
-        throw new Error(result?.error || t(lang, 'previewError'));
-      }
-
       tg?.HapticFeedback?.notificationOccurred?.('success');
       setGeneratedRoomPreview({
-        image: result.image,
-        provider: result.provider || 'openai',
+        image: previewImage,
+        provider: 'local-preview',
       });
     } catch (error) {
       tg?.HapticFeedback?.notificationOccurred?.('error');
