@@ -1,13 +1,22 @@
-const OPENAI_API_URL = 'https://api.openai.com/v1/images/edits';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-const dataUrlToBlob = async (dataUrl) => {
-  const response = await fetch(dataUrl);
+const extractImageUrl = (payload) => {
+  const message = payload?.choices?.[0]?.message;
+  const imageEntry =
+    message?.images?.[0]?.image_url?.url ||
+    message?.images?.[0]?.image_url ||
+    message?.image_url?.url ||
+    message?.image_url ||
+    null;
 
-  if (!response.ok) {
-    throw new Error('Failed to read preview image');
+  if (imageEntry) {
+    return imageEntry;
   }
 
-  return response.blob();
+  const content = Array.isArray(message?.content) ? message.content : [];
+  const imageContent = content.find((item) => item?.type === 'image_url' || item?.type === 'output_image');
+
+  return imageContent?.image_url?.url || imageContent?.image_url || imageContent?.url || null;
 };
 
 exports.handler = async (event) => {
@@ -19,12 +28,12 @@ exports.handler = async (event) => {
   }
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Missing OPENAI_API_KEY' }),
+        body: JSON.stringify({ error: 'Missing OPENROUTER_API_KEY' }),
       };
     }
 
@@ -43,51 +52,62 @@ exports.handler = async (event) => {
       };
     }
 
-    const previewBlob = await dataUrlToBlob(basePreviewImage);
-    const formData = new FormData();
-    formData.append('model', process.env.OPENAI_ROOM_PREVIEW_MODEL || 'gpt-image-1');
-    formData.append(
-      'prompt',
-      [
-        `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
-        'Keep the exact room layout, furniture placement, and wall colors from the input image.',
-        'Keep the carpet pattern and border recognizable from the preview image.',
-        `Make the carpet feel naturally placed on the floor in a ${placementMode === 'coverage' ? 'larger room-covering' : 'centered focal'} layout.`,
-        'Blend the rug with realistic contact shadows, floor perspective, and room lighting.',
-        'Do not remove the carpet, do not replace it with another object, and do not transform the room into a different location.',
-        `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
-      ].join(' ')
-    );
-    formData.append('size', '1024x1536');
-    formData.append('quality', 'medium');
-    formData.append('input_fidelity', 'high');
-    formData.append('image[]', previewBlob, 'base-preview.jpg');
-
-    const openAiResponse = await fetch(OPENAI_API_URL, {
+    const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': event.headers.origin || event.headers.referer || 'https://sanat-hali.app',
+        'X-Title': 'Sanat Hali Mini App',
       },
-      body: formData,
+      body: JSON.stringify({
+        model: process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-2.5-flash-image-preview',
+        modalities: ['image', 'text'],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: [
+                  `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
+                  'Keep the exact room layout, furniture placement, and wall colors from the image.',
+                  'Keep the carpet pattern, border, and palette recognizable.',
+                  `Make the carpet feel naturally placed on the floor in a ${placementMode === 'coverage' ? 'larger room-covering' : 'centered focal'} layout.`,
+                  'Blend the rug with realistic contact shadows, floor perspective, and room lighting.',
+                  'Do not remove the carpet, do not replace it with another object, and do not transform the room into a different location.',
+                  `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
+                ].join(' '),
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: basePreviewImage,
+                },
+              },
+            ],
+          },
+        ],
+      }),
     });
 
-    const payload = await openAiResponse.json();
+    const payload = await response.json();
 
-    if (!openAiResponse.ok) {
+    if (!response.ok) {
       return {
-        statusCode: openAiResponse.status,
+        statusCode: response.status,
         body: JSON.stringify({
-          error: payload?.error?.message || 'OpenAI image edit request failed',
+          error: payload?.error?.message || payload?.message || 'OpenRouter image request failed',
         }),
       };
     }
 
-    const base64Image = payload?.data?.[0]?.b64_json;
+    const imageUrl = extractImageUrl(payload);
 
-    if (!base64Image) {
+    if (!imageUrl) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'OpenAI did not return an image preview' }),
+        body: JSON.stringify({ error: 'OpenRouter did not return an image preview' }),
       };
     }
 
@@ -95,8 +115,8 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         ok: true,
-        provider: 'openai',
-        image: `data:image/png;base64,${base64Image}`,
+        provider: 'openrouter',
+        image: imageUrl,
       }),
     };
   } catch (error) {

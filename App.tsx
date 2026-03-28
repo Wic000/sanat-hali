@@ -403,7 +403,7 @@ const App: React.FC = () => {
       tg?.HapticFeedback?.notificationOccurred?.('success');
       setGeneratedRoomPreview({
         image: result.image,
-        provider: result.provider || 'huggingface',
+        provider: result.provider || 'openrouter',
       });
     } catch (error) {
       try {
