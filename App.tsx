@@ -285,6 +285,28 @@ const App: React.FC = () => {
       setRoomImage(resizedImage);
       setGeneratedRoomPreview(null);
       setRoomPreviewError('');
+      if (selectedProduct) {
+        setIsGeneratingRoomPreview(true);
+
+        try {
+          const previewImage = await createLocalRoomPreview({
+            roomImage: resizedImage,
+            rugImage: selectedImage || selectedProduct.images[0],
+            placementMode: roomPlacementMode,
+          });
+          tg?.HapticFeedback?.notificationOccurred?.('success');
+          setGeneratedRoomPreview({
+            image: previewImage,
+            provider: 'local-preview',
+          });
+        } catch (previewError) {
+          tg?.HapticFeedback?.notificationOccurred?.('error');
+          setGeneratedRoomPreview(null);
+          setRoomPreviewError(previewError instanceof Error ? previewError.message : t(lang, 'previewError'));
+        } finally {
+          setIsGeneratingRoomPreview(false);
+        }
+      }
     } catch (error) {
       setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
     }

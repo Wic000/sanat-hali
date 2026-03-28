@@ -79,7 +79,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
             <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
               {labels.roomPreview}
             </p>
-            <h2 className={`mt-2 font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>
+            <h2 className={`mt-2 max-w-[12rem] font-display text-[24px] leading-none sm:max-w-none sm:text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>
               {labels.openPreview}
             </h2>
             <p className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
@@ -135,7 +135,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
                 <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
                   {labels.roomPreview}
                 </p>
-                <h2 className={`mt-2 font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>
+                <h2 className={`mt-2 max-w-[12rem] font-display text-[24px] leading-none sm:max-w-none sm:text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>
                   {labels.aiPreviewDemo}
                 </h2>
               </div>
@@ -282,11 +282,6 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
                 {previewError}
               </div>
             )}
-
-            <div className={`mt-4 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-blue-200/20 bg-blue-200/10' : 'border-blue-100 bg-blue-50/80'}`}>
-              <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-blue-100' : 'text-blue-700'}`}>{labels.aiBlock}</div>
-              <p className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-blue-100/80' : 'text-blue-900/80'}`}>{labels.aiBlockHint}</p>
-            </div>
           </div>
         </div>
       )}

@@ -75,8 +75,8 @@ export const translations = {
   orderSending: { uz: 'Buyurtma yuborilmoqda...', ru: 'Отправка заказа...', en: 'Sending order...' },
   orderNow: { uz: 'Buyurtma berish', ru: 'Оформить заказ', en: 'Place order' },
   roomPreview: { uz: 'Xona preview', ru: 'Превью комнаты', en: 'Room preview' },
-  aiPreviewDemo: { uz: 'AI preview', ru: 'AI preview', en: 'AI preview' },
-  demoReady: { uz: 'AI tayyor', ru: 'AI готово', en: 'AI ready' },
+  aiPreviewDemo: { uz: 'Smart preview', ru: 'Smart preview', en: 'Smart preview' },
+  demoReady: { uz: 'Preview tayyor', ru: 'Preview готово', en: 'Preview ready' },
   uploadRoomCta: { uz: 'Xona rasmini yuklash', ru: 'Загрузить фото комнаты', en: 'Upload room photo' },
   roomUploadHint: {
     uz: "Tanlangan gilamni interyerga mos ko'rish uchun xona rasmini yuklang.",
@@ -97,8 +97,8 @@ export const translations = {
   },
   roomWidth: { uz: 'Xona eni', ru: 'Ширина комнаты', en: 'Room width' },
   roomHeight: { uz: 'Xona bo‘yi', ru: 'Длина комнаты', en: 'Room height' },
-  applyPreview: { uz: 'AI preview yaratish', ru: 'Создать AI preview', en: 'Generate AI preview' },
-  aiBlock: { uz: 'AI preview bloki', ru: 'Блок AI preview', en: 'AI preview block' },
+  applyPreview: { uz: 'Preview yaratish', ru: 'Создать preview', en: 'Generate preview' },
+  aiBlock: { uz: 'Preview haqida', ru: 'О preview', en: 'About preview' },
   aiBlockHint: {
     uz: 'Demo UI hozir ishlaydi. Keyin shu state ichiga haqiqiy AI API ulanadi.',
     ru: 'Сейчас работает демо UI. Позже в это состояние можно подключить реальный AI API.',
