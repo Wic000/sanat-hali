@@ -78,6 +78,77 @@ const loadImageElement = (source: string) =>
     image.src = source;
   });
 
+const extractRugCanvas = (rug: HTMLImageElement) => {
+  const sourceCanvas = document.createElement('canvas');
+  sourceCanvas.width = rug.width;
+  sourceCanvas.height = rug.height;
+  const sourceContext = sourceCanvas.getContext('2d');
+
+  if (!sourceContext) {
+    throw new Error('Canvas context unavailable');
+  }
+
+  sourceContext.drawImage(rug, 0, 0, rug.width, rug.height);
+  const imageData = sourceContext.getImageData(0, 0, rug.width, rug.height);
+  const { data, width, height } = imageData;
+
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let found = false;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const r = data[index];
+      const g = data[index + 1];
+      const b = data[index + 2];
+      const alpha = data[index + 3];
+      const brightness = (r + g + b) / 3;
+      const diff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+
+      if (alpha > 0 && brightness > 236 && diff < 18) {
+        data[index + 3] = 0;
+        continue;
+      }
+
+      if (data[index + 3] > 24) {
+        found = true;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  sourceContext.putImageData(imageData, 0, 0);
+
+  if (!found) {
+    return sourceCanvas;
+  }
+
+  const paddingX = Math.max(2, Math.round(width * 0.01));
+  const paddingY = Math.max(2, Math.round(height * 0.01));
+  const cropX = Math.max(0, minX - paddingX);
+  const cropY = Math.max(0, minY - paddingY);
+  const cropWidth = Math.min(width - cropX, maxX - minX + paddingX * 2);
+  const cropHeight = Math.min(height - cropY, maxY - minY + paddingY * 2);
+
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = cropWidth;
+  croppedCanvas.height = cropHeight;
+  const croppedContext = croppedCanvas.getContext('2d');
+
+  if (!croppedContext) {
+    throw new Error('Canvas context unavailable');
+  }
+
+  croppedContext.drawImage(sourceCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+  return croppedCanvas;
+};
+
 const createLocalRoomPreview = async ({
   roomImage,
   rugImage,
@@ -88,6 +159,7 @@ const createLocalRoomPreview = async ({
   placementMode: RoomPlacementMode;
 }) => {
   const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
+  const rugCanvas = extractRugCanvas(rug);
   const canvas = document.createElement('canvas');
   canvas.width = room.width;
   canvas.height = room.height;
@@ -100,36 +172,43 @@ const createLocalRoomPreview = async ({
 
   context.drawImage(room, 0, 0, canvas.width, canvas.height);
 
-  const destTop = placementMode === 'coverage' ? Math.round(canvas.height * 0.52) : Math.round(canvas.height * 0.58);
-  const destBottom = placementMode === 'coverage' ? Math.round(canvas.height * 0.95) : Math.round(canvas.height * 0.88);
+  const destTop = placementMode === 'coverage' ? Math.round(canvas.height * 0.6) : Math.round(canvas.height * 0.68);
+  const destBottom = placementMode === 'coverage' ? Math.round(canvas.height * 0.94) : Math.round(canvas.height * 0.9);
   const destHeight = Math.max(40, destBottom - destTop);
-  const topWidth = placementMode === 'coverage' ? canvas.width * 0.46 : canvas.width * 0.28;
-  const bottomWidth = placementMode === 'coverage' ? canvas.width * 0.92 : canvas.width * 0.56;
+  const topWidth = placementMode === 'coverage' ? canvas.width * 0.32 : canvas.width * 0.18;
+  const bottomWidth = placementMode === 'coverage' ? canvas.width * 0.78 : canvas.width * 0.42;
   const centerX = canvas.width * 0.5;
 
   context.save();
-  context.globalAlpha = 0.2;
-  context.filter = `blur(${Math.max(8, Math.round(canvas.width * 0.012))}px)`;
+  context.globalAlpha = 0.16;
+  context.filter = `blur(${Math.max(10, Math.round(canvas.width * 0.012))}px)`;
   context.beginPath();
-  context.ellipse(centerX, destBottom - destHeight * 0.06, bottomWidth * 0.42, destHeight * 0.11, 0, 0, Math.PI * 2);
+  context.ellipse(centerX, destBottom - destHeight * 0.03, bottomWidth * 0.34, destHeight * 0.08, 0, 0, Math.PI * 2);
   context.fillStyle = '#000000';
   context.fill();
   context.restore();
 
   context.save();
+  context.beginPath();
+  context.moveTo(centerX - topWidth / 2, destTop);
+  context.lineTo(centerX + topWidth / 2, destTop);
+  context.lineTo(centerX + bottomWidth / 2, destBottom);
+  context.lineTo(centerX - bottomWidth / 2, destBottom);
+  context.closePath();
+  context.clip();
 
   for (let y = 0; y < destHeight; y += 1) {
     const progress = y / destHeight;
     const sliceWidth = topWidth + (bottomWidth - topWidth) * progress;
-    const sliceHeight = Math.max(1, 1 + progress * 0.35);
+    const sliceHeight = Math.max(1, 1 + progress * 0.18);
     const left = centerX - sliceWidth / 2;
-    const sourceY = Math.floor((y / destHeight) * rug.height);
+    const sourceY = Math.floor((y / destHeight) * rugCanvas.height);
 
     context.drawImage(
-      rug,
+      rugCanvas,
       0,
       sourceY,
-      rug.width,
+      rugCanvas.width,
       1,
       left,
       destTop + y,
@@ -137,16 +216,6 @@ const createLocalRoomPreview = async ({
       sliceHeight
     );
   }
-
-  context.globalAlpha = 0.1;
-  context.fillStyle = '#ffffff';
-  context.beginPath();
-  context.moveTo(centerX - topWidth * 0.48, destTop + 2);
-  context.lineTo(centerX + topWidth * 0.48, destTop + 2);
-  context.lineTo(centerX + bottomWidth * 0.44, destBottom - 8);
-  context.lineTo(centerX - bottomWidth * 0.44, destBottom - 8);
-  context.closePath();
-  context.fill();
   context.restore();
 
   return canvas.toDataURL('image/jpeg', 0.92);
