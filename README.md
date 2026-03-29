@@ -18,6 +18,8 @@ Premium carpet showroom built with Vite + React + TailwindCSS for Telegram Mini 
 ```env
 ORDER_BOT_TOKEN=
 ADMIN_CHAT_ID=704362699
+OPENAI_API_KEY=
+OPENAI_ROOM_PREVIEW_MODEL=gpt-image-1
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 ```
@@ -40,7 +42,7 @@ npm run build
 ## Vercel deploy
 
 1. Node versiyani `20.x` qiling
-2. Environment Variables ga `ORDER_BOT_TOKEN` va `ADMIN_CHAT_ID` ni kiriting
+2. Environment Variables ga `ORDER_BOT_TOKEN`, `ADMIN_CHAT_ID`, `OPENAI_API_KEY`, `OPENAI_ROOM_PREVIEW_MODEL` ni kiriting
 3. Deploy qiling
 
 ## Hozir loyihada nima tayyor
@@ -51,5 +53,5 @@ npm run build
 - 2 tema: `light`, `dark`
 - Telegram `colorScheme` bo'yicha initial theme
 - Mobile-first premium showroom layout
-- Room preview demo UI
+- OpenAI orqali room preview generatsiya
 - Backend orqali Telegram order yuborish

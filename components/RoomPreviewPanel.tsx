@@ -4,10 +4,19 @@ import { Product, RoomDimensions, RoomPlacementMode, ThemeMode } from '../types'
 interface RoomPreviewPanelProps {
   product: Product;
   roomImage: string | null;
+  generatedPreviewImage: string | null;
+  previewProvider: string | null;
+  roomPlacementMode: RoomPlacementMode;
+  roomDimensions: RoomDimensions;
   isOpen: boolean;
+  isGenerating: boolean;
+  previewError: string;
   onOpen: () => void;
   onClose: () => void;
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  onModeChange: (mode: RoomPlacementMode) => void;
+  onDimensionsChange: React.Dispatch<React.SetStateAction<RoomDimensions>>;
+  onApply: () => void;
   labels: {
     roomPreview: string;
     aiPreviewDemo: string;
@@ -36,10 +45,19 @@ interface RoomPreviewPanelProps {
 const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
   product,
   roomImage,
+  generatedPreviewImage,
+  previewProvider,
+  roomPlacementMode,
+  roomDimensions,
   isOpen,
+  isGenerating,
+  previewError,
   onOpen,
   onClose,
   onUpload,
+  onModeChange,
+  onDimensionsChange,
+  onApply,
   labels,
   theme,
 }) => (
@@ -75,10 +93,10 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
-            <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-              {labels.aiPreviewDemo}
-            </div>
+        <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
+          <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+            {labels.aiPreviewDemo}
+          </div>
           <div className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
             {labels.takeRoomShot}
           </div>
@@ -113,7 +131,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
                 {labels.roomPreview}
               </p>
               <h2 className={`mt-2 max-w-[12rem] font-display text-[24px] leading-none sm:max-w-none sm:text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>
-                {labels.openPreview}
+                {labels.aiPreviewDemo}
               </h2>
             </div>
             <button
@@ -134,8 +152,17 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
                 : 'border-stone-900/6 bg-[linear-gradient(160deg,_rgba(243,238,231,0.95),_rgba(232,224,214,0.92))]'
             }`}
           >
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22440%22 viewBox=%220 0 320 440%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22 y1=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%23f6efe5%22/%3E%3Cstop offset=%221%22 stop-color=%22%23e0d4c4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22440%22 fill=%22url(%23g)%22/%3E%3Crect x=%2234%22 y=%2248%22 width=%22252%22 height=%22126%22 rx=%2222%22 fill=%22%23ffffff%22 fill-opacity=%220.45%22/%3E%3Crect x=%2256%22 y=%22238%22 width=%22212%22 height=%2290%22 rx=%2216%22 fill=%22%23d8c1a3%22 fill-opacity=%220.42%22/%3E%3Crect x=%2280%22 y=%22334%22 width=%22158%22 height=%2248%22 rx=%2214%22 fill=%22%23ece3d7%22 fill-opacity=%220.72%22/%3E%3C/svg%3E')] bg-cover bg-center">
-              {roomImage ? (
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22440%22 viewBox=%220 0 320 440%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22 y1=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%23f6efe5%22/%3E%3Cstop offset=%221%22 stop-color=%22%23e0d4c4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22440%22 fill=%22url(%23g)%22/%3E%3C/svg%3E')] bg-cover bg-center">
+              {generatedPreviewImage ? (
+                <>
+                  <img src={generatedPreviewImage} alt={`${product.name} preview`} className="absolute inset-0 h-full w-full object-cover" />
+                  {previewProvider && (
+                    <div className="absolute left-3 top-3 rounded-full bg-black/65 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                      {previewProvider === 'openai' ? 'OpenAI' : previewProvider}
+                    </div>
+                  )}
+                </>
+              ) : roomImage ? (
                 <img src={roomImage} alt={`${product.name} room reference`} className="absolute inset-0 h-full w-full object-cover" />
               ) : (
                 <div className={`absolute inset-0 flex items-center justify-center px-6 text-center text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-500'}`}>
@@ -157,6 +184,79 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
               {labels.uploadRoomCta}
             </label>
           </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onModeChange('center')}
+              className={`rounded-[22px] border px-4 py-4 text-left transition ${
+                roomPlacementMode === 'center'
+                  ? theme === 'dark'
+                    ? 'border-amber-200/60 bg-amber-100 text-stone-900'
+                    : 'border-stone-900 bg-stone-900 text-white'
+                  : theme === 'dark'
+                    ? 'border-white/10 bg-white/5 text-stone-200'
+                    : 'border-stone-200 bg-white/70 text-stone-700'
+              }`}
+            >
+              <div className="text-base font-semibold">{labels.centerPlacement}</div>
+              <div className="mt-1 text-sm opacity-80">{labels.centerPlacementHint}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('coverage')}
+              className={`rounded-[22px] border px-4 py-4 text-left transition ${
+                roomPlacementMode === 'coverage'
+                  ? theme === 'dark'
+                    ? 'border-amber-200/60 bg-amber-100 text-stone-900'
+                    : 'border-stone-900 bg-stone-900 text-white'
+                  : theme === 'dark'
+                    ? 'border-white/10 bg-white/5 text-stone-200'
+                    : 'border-stone-200 bg-white/70 text-stone-700'
+              }`}
+            >
+              <div className="text-base font-semibold">{labels.fullCoverage}</div>
+              <div className="mt-1 text-sm opacity-80">{labels.fullCoverageHint}</div>
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className={`block rounded-[22px] border px-4 py-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-200 bg-white/70'}`}>
+              <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.roomWidth}</div>
+              <input
+                value={roomDimensions.width}
+                onChange={(event) => onDimensionsChange((current) => ({ ...current, width: event.target.value }))}
+                className={`mt-2 w-full bg-transparent text-2xl outline-none ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}
+              />
+            </label>
+            <label className={`block rounded-[22px] border px-4 py-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-stone-200 bg-white/70'}`}>
+              <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{labels.roomHeight}</div>
+              <input
+                value={roomDimensions.height}
+                onChange={(event) => onDimensionsChange((current) => ({ ...current, height: event.target.value }))}
+                className={`mt-2 w-full bg-transparent text-2xl outline-none ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}
+              />
+            </label>
+          </div>
+
+          <button
+            type="button"
+            onClick={onApply}
+            disabled={isGenerating}
+            className={`mt-4 w-full rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.18)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              theme === 'dark'
+                ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
+                : 'border border-stone-900 bg-stone-900 text-white hover:bg-stone-800'
+            }`}
+          >
+            {isGenerating ? labels.generatingPreview : labels.applyPreview}
+          </button>
+
+          {previewError && (
+            <div className="mt-4 rounded-[22px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {previewError}
+            </div>
+          )}
         </div>
       </div>
     )}
