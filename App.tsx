@@ -12,7 +12,6 @@ import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory }
 import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
-const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -129,7 +128,7 @@ const buildRugPolygon = ({
   };
 };
 
-const createRoomPreviewAssets = async ({
+const createRoomPlacementPreview = async ({
   roomImage,
   rugImage,
   placementMode,
@@ -140,24 +139,14 @@ const createRoomPreviewAssets = async ({
 }) => {
   const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
   const roomSize = fitInside(room.width, room.height, 512);
-  const rugSize = fitInside(rug.width, rug.height, 512);
   const roomCanvas = document.createElement('canvas');
   const roomContext = roomCanvas.getContext('2d');
-  const rugCanvas = document.createElement('canvas');
-  const rugContext = rugCanvas.getContext('2d');
-  const maskCanvas = document.createElement('canvas');
-  const maskContext = maskCanvas.getContext('2d');
-  if (!roomContext || !rugContext || !maskContext) {
+  if (!roomContext) {
     throw new Error('Canvas context unavailable');
   }
   roomCanvas.width = roomSize.width;
   roomCanvas.height = roomSize.height;
-  rugCanvas.width = rugSize.width;
-  rugCanvas.height = rugSize.height;
-  maskCanvas.width = roomSize.width;
-  maskCanvas.height = roomSize.height;
   roomContext.drawImage(room, 0, 0, roomCanvas.width, roomCanvas.height);
-  rugContext.drawImage(rug, 0, 0, rugCanvas.width, rugCanvas.height);
 
   const polygon = buildRugPolygon({
     canvasWidth: roomCanvas.width,
@@ -165,24 +154,39 @@ const createRoomPreviewAssets = async ({
     placementMode,
   });
 
-  maskContext.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-  maskContext.fillStyle = 'rgba(255,255,255,1)';
-  maskContext.beginPath();
+  roomContext.save();
+  roomContext.beginPath();
   polygon.points.forEach((point, index) => {
     if (index === 0) {
-      maskContext.moveTo(point.x, point.y);
+      roomContext.moveTo(point.x, point.y);
     } else {
-      maskContext.lineTo(point.x, point.y);
+      roomContext.lineTo(point.x, point.y);
     }
   });
-  maskContext.closePath();
-  maskContext.fill();
+  roomContext.closePath();
+  roomContext.shadowColor = 'rgba(0,0,0,0.26)';
+  roomContext.shadowBlur = Math.max(16, roomCanvas.width * 0.018);
+  roomContext.shadowOffsetY = Math.max(10, roomCanvas.height * 0.018);
+  roomContext.clip();
+  roomContext.drawImage(rug, polygon.centerX - polygon.rugWidth / 2, polygon.topY, polygon.rugWidth, polygon.rugHeight);
+  roomContext.restore();
 
-  return {
-    roomBaseImage: roomCanvas.toDataURL('image/jpeg', 0.68),
-    rugReferenceImage: rugCanvas.toDataURL('image/jpeg', 0.76),
-    maskImage: maskCanvas.toDataURL('image/png'),
-  };
+  roomContext.save();
+  roomContext.beginPath();
+  polygon.points.forEach((point, index) => {
+    if (index === 0) {
+      roomContext.moveTo(point.x, point.y);
+    } else {
+      roomContext.lineTo(point.x, point.y);
+    }
+  });
+  roomContext.closePath();
+  roomContext.strokeStyle = 'rgba(255,255,255,0.2)';
+  roomContext.lineWidth = Math.max(1.5, roomCanvas.width * 0.0022);
+  roomContext.stroke();
+  roomContext.restore();
+
+  return roomCanvas.toDataURL('image/jpeg', 0.86);
 };
 
 const App: React.FC = () => {
@@ -313,29 +317,12 @@ const App: React.FC = () => {
     setIsGeneratingRoomPreview(true);
     setRoomPreviewError('');
     try {
-      const { roomBaseImage, rugReferenceImage, maskImage } = await createRoomPreviewAssets({
+      const previewImage = await createRoomPlacementPreview({
         roomImage,
         rugImage: selectedImage || selectedProduct.images[0],
         placementMode: roomPlacementMode,
       });
-      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomBaseImage,
-          rugReferenceImage,
-          maskImage,
-          productName: selectedProduct.name,
-          placementMode: roomPlacementMode,
-          roomWidth: roomDimensions.width,
-          roomHeight: roomDimensions.height,
-        }),
-      });
-      const result = await parseJsonResponse(response);
-      if (!response.ok || !result?.image) {
-        throw new Error(result?.error || t(lang, 'previewError'));
-      }
-      setGeneratedRoomPreview({ image: result.image, provider: result.provider || 'openai' });
+      setGeneratedRoomPreview({ image: previewImage, provider: 'preserved' });
       tg?.HapticFeedback?.notificationOccurred?.('success');
     } catch (error) {
       setGeneratedRoomPreview(null);

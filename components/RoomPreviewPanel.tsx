@@ -157,7 +157,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
               {generatedPreviewImage ? (
                 <>
                   <img src={generatedPreviewImage} alt={`${product.name} preview`} className="absolute inset-0 h-full w-full object-cover" />
-                  {previewProvider && (
+                  {previewProvider && previewProvider !== 'preserved' && (
                     <div className="absolute left-3 top-3 rounded-full bg-black/65 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
                       {previewProvider === 'openai' ? 'OpenAI' : previewProvider}
                     </div>
