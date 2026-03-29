@@ -17,10 +17,21 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
     }
 
-    const { roomBaseImage, rugReferenceImage, maskImage, productName, placementMode = 'center', roomWidth, roomHeight } = req.body || {};
+    const {
+      roomBaseImage,
+      rugReferenceImage,
+      maskImage,
+      basePreviewImage,
+      productName,
+      placementMode = 'center',
+      roomWidth,
+      roomHeight,
+    } = req.body || {};
 
-    if (!roomBaseImage || !rugReferenceImage || !maskImage || !productName) {
-      return res.status(400).json({ error: 'Missing room image, rug reference image, mask image, or product name' });
+    const primaryImage = roomBaseImage || basePreviewImage;
+
+    if (!primaryImage || !productName) {
+      return res.status(400).json({ error: 'Missing room image or product name' });
     }
 
     const formData = new FormData();
@@ -29,12 +40,12 @@ export default async function handler(req, res) {
       'prompt',
       [
         `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
-        'Use the carpet from the second input image as the exact reference carpet.',
-        'Only edit the masked carpet area on the first image.',
+        rugReferenceImage ? 'Use the carpet from the second input image as the exact reference carpet.' : 'Keep the carpet already visible in the image as the exact reference carpet.',
+        maskImage ? 'Only edit the masked carpet area on the first image.' : 'Only refine the carpet area and keep the room unchanged.',
         'Do not change any unmasked region of the room.',
         'Keep the same room architecture, furniture layout, wall colors, flooring pattern, people, objects, and camera perspective exactly as they are.',
         'Do not add or remove any extra details, furniture, decor, windows, doors, shadows, or people.',
-        'Keep the carpet design, border, color palette, and ornament from the reference image recognizable and naturally blended into the existing floor without changing the room itself.',
+        'Keep the carpet design, border, color palette, and ornament recognizable and naturally blended into the existing floor without changing the room itself.',
         `Placement style should remain ${placementMode === 'coverage' ? 'room-covering and wider' : 'centered and focal'}.`,
         'Add only subtle realistic contact shadow around the carpet edges inside the masked area.',
         `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
@@ -43,9 +54,13 @@ export default async function handler(req, res) {
     formData.append('size', '1024x1024');
     formData.append('quality', 'medium');
     formData.append('input_fidelity', 'high');
-    formData.append('image', await dataUrlToBlob(roomBaseImage), 'room-preview-room.png');
-    formData.append('image', await dataUrlToBlob(rugReferenceImage), 'room-preview-rug.png');
-    formData.append('mask', await dataUrlToBlob(maskImage), 'room-preview-mask.png');
+    formData.append('image', await dataUrlToBlob(primaryImage), 'room-preview-room.png');
+    if (rugReferenceImage) {
+      formData.append('image', await dataUrlToBlob(rugReferenceImage), 'room-preview-rug.png');
+    }
+    if (maskImage) {
+      formData.append('mask', await dataUrlToBlob(maskImage), 'room-preview-mask.png');
+    }
 
     const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
