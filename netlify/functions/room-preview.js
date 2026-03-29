@@ -23,12 +23,12 @@ export async function handler(event) {
       };
     }
 
-    const { basePreviewImage, productName, placementMode = 'center', roomWidth, roomHeight } = JSON.parse(event.body || '{}');
+    const { basePreviewImage, maskImage, productName, placementMode = 'center', roomWidth, roomHeight } = JSON.parse(event.body || '{}');
 
-    if (!basePreviewImage || !productName) {
+    if (!basePreviewImage || !maskImage || !productName) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing base preview image or product name' }),
+        body: JSON.stringify({ error: 'Missing base preview image, mask image, or product name' }),
       };
     }
 
@@ -38,17 +38,20 @@ export async function handler(event) {
       'prompt',
       [
         `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
-        'Keep the same room architecture, furniture layout, wall colors, and perspective.',
-        'Do not change the room itself: preserve people, objects, doors, walls, windows, furniture, flooring, and camera angle.',
-        'Keep the carpet design recognizable and naturally blended into the floor.',
+        'Only edit the masked carpet area.',
+        'Do not change any unmasked region of the room.',
+        'Keep the same room architecture, furniture layout, wall colors, flooring pattern, people, objects, and camera perspective exactly as they are.',
+        'Do not add or remove any extra details, furniture, decor, windows, doors, shadows, or people.',
+        'Keep the carpet design recognizable and naturally blended into the existing floor without changing the room itself.',
         `Placement style should remain ${placementMode === 'coverage' ? 'room-covering and wider' : 'centered and focal'}.`,
-        'Add realistic contact shadows, floor perspective, and room lighting.',
+        'Add only subtle realistic contact shadow around the carpet edges inside the masked area.',
         `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
       ].join(' ')
     );
     formData.append('size', '1024x1024');
     formData.append('quality', 'medium');
-    formData.append('image', await dataUrlToBlob(basePreviewImage), 'room-preview-base.jpg');
+    formData.append('image', await dataUrlToBlob(basePreviewImage), 'room-preview-base.png');
+    formData.append('mask', await dataUrlToBlob(maskImage), 'room-preview-mask.png');
 
     const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
