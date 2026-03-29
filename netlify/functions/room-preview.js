@@ -63,9 +63,9 @@ export async function handler(event) {
     formData.append('size', '1024x1024');
     formData.append('quality', 'medium');
     formData.append('input_fidelity', 'high');
-    formData.append('image', await dataUrlToBlob(primaryImage), 'room-preview-room.png');
+    formData.append('image[]', await dataUrlToBlob(primaryImage), 'room-preview-room.png');
     if (rugReferenceImage) {
-      formData.append('image', await dataUrlToBlob(rugReferenceImage), 'room-preview-rug.png');
+      formData.append('image[]', await dataUrlToBlob(rugReferenceImage), 'room-preview-rug.png');
     }
     if (maskImage) {
       formData.append('mask', await dataUrlToBlob(maskImage), 'room-preview-mask.png');
