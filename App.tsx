@@ -39,12 +39,25 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
-const resizeImageDataUrl = (source: string, maxSide = 1280) =>
+const resizeImageDataUrl = (source: string, maxSide = 1280, mimeType = 'image/jpeg', quality = 0.9) =>
   new Promise<string>((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
       const largestSide = Math.max(image.width, image.height);
       if (!largestSide || largestSide <= maxSide) {
+        if (mimeType === 'image/jpeg') {
+          const passthroughCanvas = document.createElement('canvas');
+          passthroughCanvas.width = image.width;
+          passthroughCanvas.height = image.height;
+          const passthroughContext = passthroughCanvas.getContext('2d');
+          if (!passthroughContext) {
+            reject(new Error('Canvas context unavailable'));
+            return;
+          }
+          passthroughContext.drawImage(image, 0, 0, image.width, image.height);
+          resolve(passthroughCanvas.toDataURL(mimeType, quality));
+          return;
+        }
         resolve(source);
         return;
       }
@@ -58,7 +71,7 @@ const resizeImageDataUrl = (source: string, maxSide = 1280) =>
         return;
       }
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.9));
+      resolve(canvas.toDataURL(mimeType, quality));
     };
     image.onerror = () => reject(new Error('Failed to load image'));
     image.src = source;
@@ -126,8 +139,8 @@ const createRoomPreviewAssets = async ({
   placementMode: RoomPlacementMode;
 }) => {
   const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
-  const roomSize = fitInside(room.width, room.height, 768);
-  const rugSize = fitInside(rug.width, rug.height, 768);
+  const roomSize = fitInside(room.width, room.height, 512);
+  const rugSize = fitInside(rug.width, rug.height, 512);
   const roomCanvas = document.createElement('canvas');
   const roomContext = roomCanvas.getContext('2d');
   const rugCanvas = document.createElement('canvas');
@@ -166,8 +179,8 @@ const createRoomPreviewAssets = async ({
   maskContext.fill();
 
   return {
-    roomBaseImage: roomCanvas.toDataURL('image/jpeg', 0.82),
-    rugReferenceImage: rugCanvas.toDataURL('image/jpeg', 0.9),
+    roomBaseImage: roomCanvas.toDataURL('image/jpeg', 0.68),
+    rugReferenceImage: rugCanvas.toDataURL('image/jpeg', 0.76),
     maskImage: maskCanvas.toDataURL('image/png'),
   };
 };
@@ -283,7 +296,7 @@ const App: React.FC = () => {
     if (!file) return;
     try {
       const imageSource = await readFileAsDataUrl(file);
-      const resizedImage = await resizeImageDataUrl(imageSource);
+      const resizedImage = await resizeImageDataUrl(imageSource, 1024, 'image/jpeg', 0.82);
       setRoomImage(resizedImage);
       setGeneratedRoomPreview(null);
       setRoomPreviewError('');
@@ -338,6 +351,9 @@ const App: React.FC = () => {
     setIsSubmitting(true);
     setOrderFeedback({ status: 'idle', message: '' });
     try {
+      const previewImageForOrder = generatedRoomPreview?.image
+        ? await resizeImageDataUrl(generatedRoomPreview.image, 768, 'image/jpeg', 0.8)
+        : null;
       const response = await fetch(TELEGRAM_ORDER_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,7 +370,7 @@ const App: React.FC = () => {
             height: roomDimensions.height,
             hasRoomImage: Boolean(roomImage),
             hasGeneratedPreview: Boolean(generatedRoomPreview?.image),
-            previewImage: generatedRoomPreview?.image || null,
+            previewImage: previewImageForOrder,
           },
         }),
       });
