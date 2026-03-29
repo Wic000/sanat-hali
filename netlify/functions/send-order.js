@@ -14,6 +14,11 @@ const formatMoney = (value) => {
   return `${new Intl.NumberFormat('en-US').format(amount).replace(/,/g, ' ')} so'm`;
 };
 
+const dataUrlToBlob = async (dataUrl) => {
+  const response = await fetch(dataUrl);
+  return response.blob();
+};
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -53,6 +58,7 @@ export async function handler(event) {
     const roomHeight = room?.height || 'not provided';
     const hasRoomImage = room?.hasRoomImage ? 'yes' : 'no';
     const hasGeneratedPreview = room?.hasGeneratedPreview ? 'yes' : 'no';
+    const previewImage = room?.previewImage || null;
 
     const text = [
       '<b>New Sanat Hali order</b>',
@@ -75,18 +81,32 @@ export async function handler(event) {
       `<b>AI preview generated:</b> ${escapeHtml(hasGeneratedPreview)}`,
     ].join('\n');
 
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: adminChatId,
-        text,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      }),
-    });
+    let telegramResponse;
+
+    if (previewImage) {
+      const formData = new FormData();
+      formData.append('chat_id', String(adminChatId));
+      formData.append('photo', await dataUrlToBlob(previewImage), 'room-preview.png');
+      formData.append('caption', text);
+      formData.append('parse_mode', 'HTML');
+      telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: adminChatId,
+          text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true,
+        }),
+      });
+    }
 
     const telegramData = await telegramResponse.json();
 

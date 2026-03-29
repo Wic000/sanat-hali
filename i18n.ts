@@ -172,6 +172,11 @@ export const translations = {
     ru: 'AI preview создается...',
     en: 'Generating AI preview...',
   },
+  estimatedWait: {
+    uz: 'Taxminan 20-40 sekund kuting.',
+    ru: 'Подождите примерно 20-40 секунд.',
+    en: 'Please wait about 20-40 seconds.',
+  },
   previewReadyStatus: {
     uz: 'Preview tayyor',
     ru: 'Preview готово',

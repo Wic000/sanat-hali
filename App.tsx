@@ -207,6 +207,12 @@ const App: React.FC = () => {
     });
   }, [selectedProduct]);
 
+  useEffect(() => {
+    if (!roomImage) return;
+    setGeneratedRoomPreview(null);
+    setRoomPreviewError('');
+  }, [selectedProductId, selectedImage, roomPlacementMode, roomImage]);
+
   const selectedSize = selectedProduct
     ? selectedProduct.sizes.find((size) => size.label === selectedSizeLabel) || selectedProduct.sizes[0]
     : null;
@@ -298,6 +304,7 @@ const App: React.FC = () => {
             height: roomDimensions.height,
             hasRoomImage: Boolean(roomImage),
             hasGeneratedPreview: Boolean(generatedRoomPreview?.image),
+            previewImage: generatedRoomPreview?.image || null,
           },
         }),
       });
@@ -339,10 +346,8 @@ const App: React.FC = () => {
     setSelectedProductId(null);
     setSelectedImage('');
     setSelectedSizeLabel('');
-    setRoomImage(null);
     setGeneratedRoomPreview(null);
     setRoomPreviewError('');
-    setRoomPlacementMode('center');
     setShowRoomPreview(false);
     setShowPhoneModal(false);
     setOrderFeedback({ status: 'idle', message: '' });
@@ -361,7 +366,7 @@ const App: React.FC = () => {
           <main className="grid gap-4 lg:grid-cols-[0.92fr_1.2fr_0.95fr] lg:items-start">
             <ProductInfoPanel product={selectedProduct} selectedSizeLabel={selectedSize.label} selectedPriceLabel={formatPrice(selectedPrice)} note={note} isSubmitting={isSubmitting} orderStatus={orderFeedback.status} orderMessage={orderFeedback.message} onSelectSize={setSelectedSizeLabel} onChangeNote={setNote} onSubmit={handleOrderAction} labels={{ featured: t(lang, 'featured'), aiAction: t(lang, 'aiPreviewDemo'), orderAction: t(lang, 'orderNow'), price: t(lang, 'price'), sizes: t(lang, 'sizes'), description: t(lang, 'description'), specs: t(lang, 'specs'), note: t(lang, 'note'), notePlaceholder: t(lang, 'notePlaceholder'), orderSending: t(lang, 'orderSending'), orderNow: t(lang, 'orderNow') }} theme={theme} />
             <ProductGalleryPanel product={selectedProduct} selectedImage={selectedImage} gallery={selectedGallery} onSelectImage={setSelectedImage} zoomLabel={t(lang, 'previewReady')} backLabel={t(lang, 'backToCollection')} closeLabel={t(lang, 'close')} zoomInLabel={t(lang, 'zoomIn')} zoomOutLabel={t(lang, 'zoomOut')} onBack={handleClearSelection} theme={theme} />
-            <RoomPreviewPanel product={selectedProduct} roomImage={roomImage} generatedPreviewImage={generatedRoomPreview?.image || null} previewProvider={generatedRoomPreview?.provider || null} roomPlacementMode={roomPlacementMode} roomDimensions={roomDimensions} isOpen={showRoomPreview} isGenerating={isGeneratingRoomPreview} previewError={roomPreviewError} onOpen={() => setShowRoomPreview(true)} onClose={() => setShowRoomPreview(false)} onUpload={handleRoomUpload} onModeChange={setRoomPlacementMode} onDimensionsChange={setRoomDimensions} onApply={handleGenerateRoomPreview} labels={{ roomPreview: t(lang, 'roomPreview'), aiPreviewDemo: t(lang, 'aiPreviewDemo'), demoReady: t(lang, 'demoReady'), roomUploadHint: t(lang, 'roomUploadHint'), uploadRoomCta: t(lang, 'uploadRoomCta'), centerPlacement: t(lang, 'centerPlacement'), centerPlacementHint: t(lang, 'centerPlacementHint'), fullCoverage: t(lang, 'fullCoverage'), fullCoverageHint: t(lang, 'fullCoverageHint'), roomWidth: t(lang, 'roomWidth'), roomHeight: t(lang, 'roomHeight'), applyPreview: t(lang, 'applyPreview'), aiBlock: t(lang, 'aiBlock'), aiBlockHint: t(lang, 'aiBlockHint'), openPreview: t(lang, 'openPreview'), openPreviewHint: t(lang, 'openPreviewHint'), close: t(lang, 'close'), takeRoomShot: t(lang, 'takeRoomShot'), generatingPreview: t(lang, 'generatingPreview'), previewReadyStatus: t(lang, 'previewReadyStatus') }} theme={theme} />
+            <RoomPreviewPanel product={selectedProduct} roomImage={roomImage} generatedPreviewImage={generatedRoomPreview?.image || null} previewProvider={generatedRoomPreview?.provider || null} roomPlacementMode={roomPlacementMode} roomDimensions={roomDimensions} isOpen={showRoomPreview} isGenerating={isGeneratingRoomPreview} previewError={roomPreviewError} onOpen={() => setShowRoomPreview(true)} onClose={() => setShowRoomPreview(false)} onUpload={handleRoomUpload} onModeChange={setRoomPlacementMode} onDimensionsChange={setRoomDimensions} onApply={handleGenerateRoomPreview} labels={{ roomPreview: t(lang, 'roomPreview'), aiPreviewDemo: t(lang, 'aiPreviewDemo'), demoReady: t(lang, 'demoReady'), roomUploadHint: t(lang, 'roomUploadHint'), uploadRoomCta: t(lang, 'uploadRoomCta'), centerPlacement: t(lang, 'centerPlacement'), centerPlacementHint: t(lang, 'centerPlacementHint'), fullCoverage: t(lang, 'fullCoverage'), fullCoverageHint: t(lang, 'fullCoverageHint'), roomWidth: t(lang, 'roomWidth'), roomHeight: t(lang, 'roomHeight'), applyPreview: t(lang, 'applyPreview'), aiBlock: t(lang, 'aiBlock'), aiBlockHint: t(lang, 'aiBlockHint'), openPreview: t(lang, 'openPreview'), openPreviewHint: t(lang, 'openPreviewHint'), close: t(lang, 'close'), takeRoomShot: t(lang, 'takeRoomShot'), generatingPreview: t(lang, 'generatingPreview'), estimatedWait: t(lang, 'estimatedWait'), previewReadyStatus: t(lang, 'previewReadyStatus') }} theme={theme} />
           </main>
         )}
         <section className="mt-4 lg:hidden">

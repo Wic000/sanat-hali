@@ -30,6 +30,7 @@ export default async function handler(req, res) {
       [
         `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
         'Keep the same room architecture, furniture layout, wall colors, and perspective.',
+        'Do not change the room itself: preserve people, objects, doors, walls, windows, furniture, flooring, and camera angle.',
         'Keep the carpet design recognizable and naturally blended into the floor.',
         `Placement style should remain ${placementMode === 'coverage' ? 'room-covering and wider' : 'centered and focal'}.`,
         'Add realistic contact shadows, floor perspective, and room lighting.',

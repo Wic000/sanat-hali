@@ -37,6 +37,7 @@ interface RoomPreviewPanelProps {
     close: string;
     takeRoomShot: string;
     generatingPreview: string;
+    estimatedWait: string;
     previewReadyStatus: string;
   };
   theme: ThemeMode;
@@ -251,6 +252,12 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
           >
             {isGenerating ? labels.generatingPreview : labels.applyPreview}
           </button>
+
+          {isGenerating && (
+            <div className={`mt-3 text-center text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+              {labels.estimatedWait}
+            </div>
+          )}
 
           {previewError && (
             <div className="mt-4 rounded-[22px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
