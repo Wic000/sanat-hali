@@ -72,6 +72,19 @@ const loadImageElement = (source: string) =>
     image.src = source;
   });
 
+const fitInside = (width: number, height: number, maxSide: number) => {
+  const largestSide = Math.max(width, height);
+  if (!largestSide || largestSide <= maxSide) {
+    return { width, height, scale: 1 };
+  }
+  const scale = maxSide / largestSide;
+  return {
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
+    scale,
+  };
+};
+
 const buildRugPolygon = ({
   canvasWidth,
   canvasHeight,
@@ -113,6 +126,8 @@ const createRoomPreviewAssets = async ({
   placementMode: RoomPlacementMode;
 }) => {
   const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
+  const roomSize = fitInside(room.width, room.height, 768);
+  const rugSize = fitInside(rug.width, rug.height, 768);
   const roomCanvas = document.createElement('canvas');
   const roomContext = roomCanvas.getContext('2d');
   const rugCanvas = document.createElement('canvas');
@@ -122,12 +137,12 @@ const createRoomPreviewAssets = async ({
   if (!roomContext || !rugContext || !maskContext) {
     throw new Error('Canvas context unavailable');
   }
-  roomCanvas.width = room.width;
-  roomCanvas.height = room.height;
-  rugCanvas.width = rug.width;
-  rugCanvas.height = rug.height;
-  maskCanvas.width = room.width;
-  maskCanvas.height = room.height;
+  roomCanvas.width = roomSize.width;
+  roomCanvas.height = roomSize.height;
+  rugCanvas.width = rugSize.width;
+  rugCanvas.height = rugSize.height;
+  maskCanvas.width = roomSize.width;
+  maskCanvas.height = roomSize.height;
   roomContext.drawImage(room, 0, 0, roomCanvas.width, roomCanvas.height);
   rugContext.drawImage(rug, 0, 0, rugCanvas.width, rugCanvas.height);
 
@@ -151,8 +166,8 @@ const createRoomPreviewAssets = async ({
   maskContext.fill();
 
   return {
-    roomBaseImage: roomCanvas.toDataURL('image/png'),
-    rugReferenceImage: rugCanvas.toDataURL('image/png'),
+    roomBaseImage: roomCanvas.toDataURL('image/jpeg', 0.82),
+    rugReferenceImage: rugCanvas.toDataURL('image/jpeg', 0.9),
     maskImage: maskCanvas.toDataURL('image/png'),
   };
 };
