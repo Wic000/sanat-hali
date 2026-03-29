@@ -12,6 +12,7 @@ import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory }
 import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
+const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -317,12 +318,27 @@ const App: React.FC = () => {
     setIsGeneratingRoomPreview(true);
     setRoomPreviewError('');
     try {
-      const previewImage = await createRoomPlacementPreview({
+      const basePreviewImage = await createRoomPlacementPreview({
         roomImage,
         rugImage: selectedImage || selectedProduct.images[0],
         placementMode: roomPlacementMode,
       });
-      setGeneratedRoomPreview({ image: previewImage, provider: 'preserved' });
+      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          basePreviewImage,
+          productName: selectedProduct.name,
+          placementMode: roomPlacementMode,
+          roomWidth: roomDimensions.width,
+          roomHeight: roomDimensions.height,
+        }),
+      });
+      const result = await parseJsonResponse(response);
+      if (!response.ok || !result?.image) {
+        throw new Error(result?.error || t(lang, 'previewError'));
+      }
+      setGeneratedRoomPreview({ image: result.image, provider: result.provider || 'openai' });
       tg?.HapticFeedback?.notificationOccurred?.('success');
     } catch (error) {
       setGeneratedRoomPreview(null);

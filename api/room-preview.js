@@ -41,13 +41,14 @@ export default async function handler(req, res) {
       [
         `Refine this carpet-in-room preview into a realistic premium showroom render for the carpet "${productName}".`,
         rugReferenceImage ? 'Use the carpet from the second input image as the exact reference carpet.' : 'Keep the carpet already visible in the image as the exact reference carpet.',
-        maskImage ? 'Only edit the masked carpet area on the first image.' : 'Only refine the carpet area and keep the room unchanged.',
-        'Do not change any unmasked region of the room.',
-        'Keep the same room architecture, furniture layout, wall colors, flooring pattern, people, objects, and camera perspective exactly as they are.',
-        'Do not add or remove any extra details, furniture, decor, windows, doors, shadows, or people.',
-        'Keep the carpet design, border, color palette, and ornament recognizable and naturally blended into the existing floor without changing the room itself.',
+        maskImage ? 'Only edit the masked carpet area on the first image.' : 'Refine the carpet placement while keeping the original room recognizable.',
+        'Preserve the same room, same furniture, same objects, same people, same walls, same floor layout, and same camera angle.',
+        'Do not add any extra furniture, decor, electronics, boxes, windows, doors, lamps, people, pets, or objects that are not already present.',
+        'Do not remove existing furniture or objects either.',
+        'Do not redesign the room. Keep it as the same room, only make the carpet look naturally placed and realistic.',
+        'Keep the carpet design, border, color palette, and ornament recognizable and naturally blended into the existing floor.',
         `Placement style should remain ${placementMode === 'coverage' ? 'room-covering and wider' : 'centered and focal'}.`,
-        'Add only subtle realistic contact shadow around the carpet edges inside the masked area.',
+        'Add only subtle realistic contact shadow around the carpet edges and keep lighting consistent with the original photo.',
         `Room reference size: width ${roomWidth || 'unknown'} meters, height ${roomHeight || 'unknown'} meters.`,
       ].join(' ')
     );
