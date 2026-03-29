@@ -9,10 +9,9 @@ import RoomPreviewPanel from './components/RoomPreviewPanel';
 import ShowroomHeader from './components/ShowroomHeader';
 import { ADMIN_TELEGRAM_IDS, DEFAULT_PRODUCTS, SHOWROOM_COPY } from './constants';
 import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory } from './i18n';
-import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
+import { AppLang, Product, RoomDimensions, TelegramUser, ThemeMode } from './types';
 
 const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
-const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
 
@@ -70,158 +69,6 @@ const resizeImageDataUrl = (source: string, maxSide = 1280) =>
     image.src = source;
   });
 
-const loadImageElement = (source: string) =>
-  new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Failed to load image asset'));
-    image.src = source;
-  });
-
-const extractRugCanvas = (rug: HTMLImageElement) => {
-  const sourceCanvas = document.createElement('canvas');
-  sourceCanvas.width = rug.width;
-  sourceCanvas.height = rug.height;
-  const sourceContext = sourceCanvas.getContext('2d');
-
-  if (!sourceContext) {
-    throw new Error('Canvas context unavailable');
-  }
-
-  sourceContext.drawImage(rug, 0, 0, rug.width, rug.height);
-  const imageData = sourceContext.getImageData(0, 0, rug.width, rug.height);
-  const { data, width, height } = imageData;
-
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-  let found = false;
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = (y * width + x) * 4;
-      const r = data[index];
-      const g = data[index + 1];
-      const b = data[index + 2];
-      const alpha = data[index + 3];
-      const brightness = (r + g + b) / 3;
-      const diff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-
-      if (alpha > 0 && brightness > 236 && diff < 18) {
-        data[index + 3] = 0;
-        continue;
-      }
-
-      if (data[index + 3] > 24) {
-        found = true;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-
-  sourceContext.putImageData(imageData, 0, 0);
-
-  if (!found) {
-    return sourceCanvas;
-  }
-
-  const paddingX = Math.max(2, Math.round(width * 0.01));
-  const paddingY = Math.max(2, Math.round(height * 0.01));
-  const cropX = Math.max(0, minX - paddingX);
-  const cropY = Math.max(0, minY - paddingY);
-  const cropWidth = Math.min(width - cropX, maxX - minX + paddingX * 2);
-  const cropHeight = Math.min(height - cropY, maxY - minY + paddingY * 2);
-
-  const croppedCanvas = document.createElement('canvas');
-  croppedCanvas.width = cropWidth;
-  croppedCanvas.height = cropHeight;
-  const croppedContext = croppedCanvas.getContext('2d');
-
-  if (!croppedContext) {
-    throw new Error('Canvas context unavailable');
-  }
-
-  croppedContext.drawImage(sourceCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-  return croppedCanvas;
-};
-
-const createLocalRoomPreview = async ({
-  roomImage,
-  rugImage,
-  placementMode,
-}: {
-  roomImage: string;
-  rugImage: string;
-  placementMode: RoomPlacementMode;
-}) => {
-  const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
-  const rugCanvas = extractRugCanvas(rug);
-  const canvas = document.createElement('canvas');
-  canvas.width = room.width;
-  canvas.height = room.height;
-
-  const context = canvas.getContext('2d');
-
-  if (!context) {
-    throw new Error('Canvas context unavailable');
-  }
-
-  context.drawImage(room, 0, 0, canvas.width, canvas.height);
-
-  const destTop = placementMode === 'coverage' ? Math.round(canvas.height * 0.6) : Math.round(canvas.height * 0.68);
-  const destBottom = placementMode === 'coverage' ? Math.round(canvas.height * 0.94) : Math.round(canvas.height * 0.9);
-  const destHeight = Math.max(40, destBottom - destTop);
-  const topWidth = placementMode === 'coverage' ? canvas.width * 0.32 : canvas.width * 0.18;
-  const bottomWidth = placementMode === 'coverage' ? canvas.width * 0.78 : canvas.width * 0.42;
-  const centerX = canvas.width * 0.5;
-
-  context.save();
-  context.globalAlpha = 0.16;
-  context.filter = `blur(${Math.max(10, Math.round(canvas.width * 0.012))}px)`;
-  context.beginPath();
-  context.ellipse(centerX, destBottom - destHeight * 0.03, bottomWidth * 0.34, destHeight * 0.08, 0, 0, Math.PI * 2);
-  context.fillStyle = '#000000';
-  context.fill();
-  context.restore();
-
-  context.save();
-  context.beginPath();
-  context.moveTo(centerX - topWidth / 2, destTop);
-  context.lineTo(centerX + topWidth / 2, destTop);
-  context.lineTo(centerX + bottomWidth / 2, destBottom);
-  context.lineTo(centerX - bottomWidth / 2, destBottom);
-  context.closePath();
-  context.clip();
-
-  for (let y = 0; y < destHeight; y += 1) {
-    const progress = y / destHeight;
-    const sliceWidth = topWidth + (bottomWidth - topWidth) * progress;
-    const sliceHeight = Math.max(1, 1 + progress * 0.18);
-    const left = centerX - sliceWidth / 2;
-    const sourceY = Math.floor((y / destHeight) * rugCanvas.height);
-
-    context.drawImage(
-      rugCanvas,
-      0,
-      sourceY,
-      rugCanvas.width,
-      1,
-      left,
-      destTop + y,
-      sliceWidth,
-      sliceHeight
-    );
-  }
-  context.restore();
-
-  return canvas.toDataURL('image/jpeg', 0.92);
-};
-
 const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
   const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(() => getInitialTelegramUser());
@@ -241,13 +88,9 @@ const App: React.FC = () => {
   const [note, setNote] = useState('');
   const [phone, setPhone] = useState('');
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [roomPlacementMode, setRoomPlacementMode] = useState<RoomPlacementMode>('center');
   const [roomDimensions, setRoomDimensions] = useState<RoomDimensions>({ width: '4.0', height: '5.5' });
   const [roomImage, setRoomImage] = useState<string | null>(null);
-  const [generatedRoomPreview, setGeneratedRoomPreview] = useState<RoomPreviewResult | null>(null);
   const [showRoomPreview, setShowRoomPreview] = useState(false);
-  const [isGeneratingRoomPreview, setIsGeneratingRoomPreview] = useState(false);
-  const [roomPreviewError, setRoomPreviewError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<{ status: 'idle' | 'success' | 'error'; message: string }>({
@@ -320,8 +163,6 @@ const App: React.FC = () => {
       const existing = selectedProduct.sizes.find((size) => size.label === current);
       return existing ? current : selectedProduct.sizes[0].label;
     });
-    setGeneratedRoomPreview(null);
-    setRoomPreviewError('');
   }, [selectedProduct]);
 
   const selectedSize = selectedProduct
@@ -353,85 +194,8 @@ const App: React.FC = () => {
       const imageSource = await readFileAsDataUrl(file);
       const resizedImage = await resizeImageDataUrl(imageSource);
       setRoomImage(resizedImage);
-      setGeneratedRoomPreview(null);
-      setRoomPreviewError('');
     } catch (error) {
-      setRoomPreviewError(error instanceof Error ? error.message : t(lang, 'previewError'));
-    }
-  };
-
-  const handleGenerateRoomPreview = async () => {
-    if (isGeneratingRoomPreview || !selectedProduct) {
-      return;
-    }
-
-    if (!roomImage) {
-      setRoomPreviewError(t(lang, 'previewMissingRoom'));
-      return;
-    }
-
-    setIsGeneratingRoomPreview(true);
-    setRoomPreviewError('');
-
-    try {
-      const basePreviewImage = await createLocalRoomPreview({
-        roomImage,
-        rugImage: selectedImage || selectedProduct.images[0],
-        placementMode: roomPlacementMode,
-      });
-
-      const response = await fetch(ROOM_PREVIEW_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          basePreviewImage,
-          productName: selectedProduct.name,
-          placementMode: roomPlacementMode,
-          roomWidth: roomDimensions.width,
-          roomHeight: roomDimensions.height,
-        }),
-      });
-
-      const result = await parseJsonResponse(response);
-
-      if (!response.ok || !result?.image) {
-        throw new Error(result?.error || t(lang, 'previewError'));
-      }
-
-      tg?.HapticFeedback?.notificationOccurred?.('success');
-      setGeneratedRoomPreview({
-        image: result.image,
-        provider: result.provider || 'openrouter',
-      });
-    } catch (error) {
-      try {
-        const fallbackPreview = await createLocalRoomPreview({
-          roomImage,
-          rugImage: selectedImage || selectedProduct.images[0],
-          placementMode: roomPlacementMode,
-        });
-
-        tg?.HapticFeedback?.notificationOccurred?.('warning');
-        setGeneratedRoomPreview({
-          image: fallbackPreview,
-          provider: 'local-preview',
-        });
-        setRoomPreviewError(
-          error instanceof Error
-            ? `${t(lang, 'previewError')} ${error.message}`
-            : t(lang, 'previewError')
-        );
-      } catch (fallbackError) {
-        tg?.HapticFeedback?.notificationOccurred?.('error');
-        setGeneratedRoomPreview(null);
-        setRoomPreviewError(
-          fallbackError instanceof Error ? fallbackError.message : t(lang, 'previewError')
-        );
-      }
-    } finally {
-      setIsGeneratingRoomPreview(false);
+      void error;
     }
   };
 
@@ -494,8 +258,6 @@ const App: React.FC = () => {
     setSelectedProductId(product.id);
     setSelectedImage(product.images[0]);
     setSelectedSizeLabel(product.sizes[0].label);
-    setGeneratedRoomPreview(null);
-    setRoomPreviewError('');
   };
 
   const handleOrderAction = () => {
@@ -521,8 +283,6 @@ const App: React.FC = () => {
     setSelectedImage('');
     setSelectedSizeLabel('');
     setShowRoomPreview(false);
-    setGeneratedRoomPreview(null);
-    setRoomPreviewError('');
     setShowPhoneModal(false);
     setOrderFeedback({ status: 'idle', message: '' });
   };
@@ -626,23 +386,19 @@ const App: React.FC = () => {
             <RoomPreviewPanel
               product={selectedProduct}
               roomImage={roomImage}
-              generatedPreviewImage={generatedRoomPreview?.image || null}
-              previewProvider={generatedRoomPreview?.provider || null}
-              roomPlacementMode={roomPlacementMode}
+              generatedPreviewImage={null}
+              previewProvider={null}
+              roomPlacementMode={'center'}
               roomDimensions={roomDimensions}
               isOpen={showRoomPreview}
-              isGenerating={isGeneratingRoomPreview}
-              previewError={roomPreviewError}
+              isGenerating={false}
+              previewError={''}
               onOpen={() => setShowRoomPreview(true)}
               onClose={() => setShowRoomPreview(false)}
               onUpload={handleRoomUpload}
-              onModeChange={(mode) => {
-                setRoomPlacementMode(mode);
-                setGeneratedRoomPreview(null);
-                setRoomPreviewError('');
-              }}
+              onModeChange={() => {}}
               onDimensionsChange={setRoomDimensions}
-              onApply={handleGenerateRoomPreview}
+              onApply={() => {}}
               labels={{
                 roomPreview: t(lang, 'roomPreview'),
                 aiPreviewDemo: t(lang, 'aiPreviewDemo'),

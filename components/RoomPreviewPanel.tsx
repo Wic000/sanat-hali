@@ -4,19 +4,10 @@ import { Product, RoomDimensions, RoomPlacementMode, ThemeMode } from '../types'
 interface RoomPreviewPanelProps {
   product: Product;
   roomImage: string | null;
-  generatedPreviewImage: string | null;
-  previewProvider: string | null;
-  roomPlacementMode: RoomPlacementMode;
-  roomDimensions: RoomDimensions;
   isOpen: boolean;
-  isGenerating: boolean;
-  previewError: string;
   onOpen: () => void;
   onClose: () => void;
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
-  onModeChange: (mode: RoomPlacementMode) => void;
-  onDimensionsChange: (dimensions: RoomDimensions) => void;
-  onApply: () => void;
   labels: {
     roomPreview: string;
     aiPreviewDemo: string;
@@ -84,10 +75,10 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
-          <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-            {labels.aiPreviewDemo}
-          </div>
+          <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
+            <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+              {labels.aiPreviewDemo}
+            </div>
           <div className={`mt-2 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
             {labels.takeRoomShot}
           </div>
@@ -165,15 +156,6 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onUpload} />
               {labels.uploadRoomCta}
             </label>
-          </div>
-
-          <div className={`mt-4 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
-            <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-              {labels.aiPreviewDemo}
-            </div>
-            <p className={`mt-3 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
-              {labels.aiBlockHint}
-            </p>
           </div>
         </div>
       </div>
