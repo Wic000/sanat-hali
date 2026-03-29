@@ -103,7 +103,7 @@ const buildRugPolygon = ({
   };
 };
 
-const createBaseRoomPreview = async ({
+const createRoomPreviewAssets = async ({
   roomImage,
   rugImage,
   placementMode,
@@ -113,53 +113,29 @@ const createBaseRoomPreview = async ({
   placementMode: RoomPlacementMode;
 }) => {
   const [room, rug] = await Promise.all([loadImageElement(roomImage), loadImageElement(rugImage)]);
-  const baseCanvas = document.createElement('canvas');
-  const baseContext = baseCanvas.getContext('2d');
+  const roomCanvas = document.createElement('canvas');
+  const roomContext = roomCanvas.getContext('2d');
+  const rugCanvas = document.createElement('canvas');
+  const rugContext = rugCanvas.getContext('2d');
   const maskCanvas = document.createElement('canvas');
   const maskContext = maskCanvas.getContext('2d');
-  if (!baseContext || !maskContext) {
+  if (!roomContext || !rugContext || !maskContext) {
     throw new Error('Canvas context unavailable');
   }
-  baseCanvas.width = room.width;
-  baseCanvas.height = room.height;
+  roomCanvas.width = room.width;
+  roomCanvas.height = room.height;
+  rugCanvas.width = rug.width;
+  rugCanvas.height = rug.height;
   maskCanvas.width = room.width;
   maskCanvas.height = room.height;
-  baseContext.drawImage(room, 0, 0, baseCanvas.width, baseCanvas.height);
+  roomContext.drawImage(room, 0, 0, roomCanvas.width, roomCanvas.height);
+  rugContext.drawImage(rug, 0, 0, rugCanvas.width, rugCanvas.height);
 
   const polygon = buildRugPolygon({
-    canvasWidth: baseCanvas.width,
-    canvasHeight: baseCanvas.height,
+    canvasWidth: roomCanvas.width,
+    canvasHeight: roomCanvas.height,
     placementMode,
   });
-
-  baseContext.save();
-  baseContext.beginPath();
-  polygon.points.forEach((point, index) => {
-    if (index === 0) {
-      baseContext.moveTo(point.x, point.y);
-    } else {
-      baseContext.lineTo(point.x, point.y);
-    }
-  });
-  baseContext.closePath();
-  baseContext.clip();
-  baseContext.drawImage(rug, polygon.centerX - polygon.rugWidth / 2, polygon.topY, polygon.rugWidth, polygon.rugHeight);
-  baseContext.restore();
-
-  baseContext.save();
-  baseContext.beginPath();
-  polygon.points.forEach((point, index) => {
-    if (index === 0) {
-      baseContext.moveTo(point.x, point.y);
-    } else {
-      baseContext.lineTo(point.x, point.y);
-    }
-  });
-  baseContext.closePath();
-  baseContext.strokeStyle = 'rgba(255,255,255,0.18)';
-  baseContext.lineWidth = Math.max(2, baseCanvas.width * 0.0024);
-  baseContext.stroke();
-  baseContext.restore();
 
   maskContext.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
   maskContext.fillStyle = 'rgba(255,255,255,1)';
@@ -175,7 +151,8 @@ const createBaseRoomPreview = async ({
   maskContext.fill();
 
   return {
-    basePreviewImage: baseCanvas.toDataURL('image/png'),
+    roomBaseImage: roomCanvas.toDataURL('image/png'),
+    rugReferenceImage: rugCanvas.toDataURL('image/png'),
     maskImage: maskCanvas.toDataURL('image/png'),
   };
 };
@@ -308,7 +285,7 @@ const App: React.FC = () => {
     setIsGeneratingRoomPreview(true);
     setRoomPreviewError('');
     try {
-      const { basePreviewImage, maskImage } = await createBaseRoomPreview({
+      const { roomBaseImage, rugReferenceImage, maskImage } = await createRoomPreviewAssets({
         roomImage,
         rugImage: selectedImage || selectedProduct.images[0],
         placementMode: roomPlacementMode,
@@ -317,7 +294,8 @@ const App: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          basePreviewImage,
+          roomBaseImage,
+          rugReferenceImage,
           maskImage,
           productName: selectedProduct.name,
           placementMode: roomPlacementMode,
