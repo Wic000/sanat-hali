@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Product, ThemeMode } from '../types';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { Product, ProductSize, ThemeMode } from '../types';
 
 interface AdminDashboardProps {
   products: Product[];
@@ -7,7 +7,53 @@ interface AdminDashboardProps {
   theme: ThemeMode;
   onToggleTheme: () => void;
   onBackHome: () => void;
+  onSaveProducts: (products: Product[]) => void;
+  onResetProducts: () => void;
 }
+
+type AdminSection = 'products' | 'orders' | 'uploads' | 'settings';
+
+const createEmptyProduct = (): Product => ({
+  id: `product-${Date.now()}`,
+  name: '',
+  category: 'Classic',
+  basePrice: 0,
+  images: [],
+  sizes: [
+    { label: '200 x 300 cm', multiplier: 1 },
+    { label: '250 x 350 cm', multiplier: 1.2 },
+  ],
+  description: '',
+  specs: [],
+  featured: false,
+  visible: true,
+});
+
+const cloneProducts = (products: Product[]) => JSON.parse(JSON.stringify(products)) as Product[];
+
+const parseList = (value: string) =>
+  value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const formatList = (items: string[]) => items.join('\n');
+
+const formatSizes = (sizes: ProductSize[]) => sizes.map((size) => `${size.label}|${size.multiplier}`).join('\n');
+
+const parseSizes = (value: string) =>
+  value
+    .split(/\r?\n/)
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .map((row) => {
+      const [label, multiplierRaw] = row.split('|');
+      const multiplier = Number(multiplierRaw);
+      return {
+        label: label?.trim() || '200 x 300 cm',
+        multiplier: Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1,
+      };
+    });
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   products,
@@ -15,213 +61,337 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   theme,
   onToggleTheme,
   onBackHome,
+  onSaveProducts,
+  onResetProducts,
 }) => {
+  const [section, setSection] = useState<AdminSection>('products');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
+  const [draftProducts, setDraftProducts] = useState<Product[]>(() => cloneProducts(products));
+  const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || '');
+  const [uploadMessage, setUploadMessage] = useState('');
 
-  const categories = useMemo(
-    () => ['All', ...Array.from(new Set(products.map((product) => product.category)))],
-    [products]
-  );
+  useEffect(() => {
+    const cloned = cloneProducts(products);
+    setDraftProducts(cloned);
+    setSelectedProductId((current) => (cloned.some((item) => item.id === current) ? current : cloned[0]?.id || ''));
+  }, [products]);
+
+  const categories = useMemo(() => ['All', ...Array.from(new Set(draftProducts.map((item) => item.category)))], [draftProducts]);
 
   const filteredProducts = useMemo(
     () =>
-      products.filter((product) => {
+      draftProducts.filter((product) => {
+        const matchesQuery =
+          !query ||
+          product.name.toLowerCase().includes(query.toLowerCase()) ||
+          product.category.toLowerCase().includes(query.toLowerCase());
         const matchesCategory = category === 'All' || product.category === category;
-        const haystack = `${product.name} ${product.category} ${product.description}`.toLowerCase();
-        const matchesQuery = !query.trim() || haystack.includes(query.trim().toLowerCase());
-        return matchesCategory && matchesQuery;
+        return matchesQuery && matchesCategory;
       }),
-    [products, query, category]
+    [draftProducts, query, category]
   );
 
-  const featuredCount = products.filter((product) => product.featured).length;
-  const visibleCount = products.filter((product) => product.visible !== false).length;
+  const selectedProduct =
+    draftProducts.find((item) => item.id === selectedProductId) || filteredProducts[0] || draftProducts[0] || null;
+
+  useEffect(() => {
+    if (selectedProduct && selectedProduct.id !== selectedProductId) {
+      setSelectedProductId(selectedProduct.id);
+    }
+  }, [selectedProduct, selectedProductId]);
+
+  const totalVisible = draftProducts.filter((item) => item.visible !== false).length;
+  const totalFeatured = draftProducts.filter((item) => item.featured).length;
+
+  const panelClass =
+    theme === 'dark'
+      ? 'border-white/10 bg-[linear-gradient(160deg,_rgba(20,20,24,0.88),_rgba(32,30,36,0.74))] text-stone-100'
+      : 'border-white/70 bg-[linear-gradient(160deg,_rgba(255,255,255,0.72),_rgba(241,245,252,0.58))] text-stone-900';
+
+  const updateSelectedProduct = (updater: (product: Product) => Product) => {
+    if (!selectedProduct) return;
+    setDraftProducts((current) => current.map((item) => (item.id === selectedProduct.id ? updater(item) : item)));
+  };
+
+  const handleAddProduct = () => {
+    const fresh = createEmptyProduct();
+    setDraftProducts((current) => [fresh, ...current]);
+    setSelectedProductId(fresh.id);
+    setSection('products');
+  };
+
+  const handleDeleteProduct = () => {
+    if (!selectedProduct) return;
+    setDraftProducts((current) => current.filter((item) => item.id !== selectedProduct.id));
+    setSelectedProductId('');
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(draftProducts, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'sanat-hali-products.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    setUploadMessage("Katalog JSON eksport qilindi.");
+  };
+
+  const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as Product[];
+      if (!Array.isArray(parsed) || !parsed.length) throw new Error("Bo'sh katalog");
+      setDraftProducts(parsed);
+      setSelectedProductId(parsed[0]?.id || '');
+      setUploadMessage('Katalog JSON import qilindi.');
+    } catch (error) {
+      setUploadMessage(error instanceof Error ? error.message : 'Import xatosi');
+    } finally {
+      event.target.value = '';
+    }
+  };
 
   return (
-    <div
-      className={`ios-liquid-bg min-h-screen ${
-        theme === 'dark'
-          ? 'bg-[radial-gradient(circle_at_top,_rgba(53,62,86,0.52),_rgba(20,23,31,0.9),_rgba(10,12,18,0.98))] text-stone-100'
-          : 'bg-[linear-gradient(180deg,_rgba(247,243,236,0.94)_0%,_rgba(231,226,217,0.92)_58%,_rgba(219,222,228,0.84)_100%)] text-stone-900'
-      }`}
-    >
-      <div className={`ios-grid ${theme === 'dark' ? 'opacity-10' : ''}`} />
-      <div className="ios-orb one" />
-      <div className="ios-orb two" />
-
-      <div className="mx-auto w-full max-w-[1440px] px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <section
-          className={`rounded-[32px] border p-5 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl ${
-            theme === 'dark'
-              ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
-              : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
-          }`}
-        >
+    <div className={`min-h-screen px-4 py-5 sm:px-6 ${theme === 'dark' ? 'bg-[#0f1014]' : 'bg-[#eef1f6]'}`}>
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-4">
+        <section className={`rounded-[28px] border p-5 shadow-[0_24px_80px_rgba(20,18,16,0.18)] backdrop-blur-2xl ${panelClass}`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-                Web admin
-              </p>
-              <h1 className="mt-2 font-display text-4xl">Sanat Hali Admin</h1>
-              <p className={`mt-3 max-w-2xl text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
-                Bu panel Telegram ichidan emas, alohida web sahifa sifatida boshqaruvni qulay qilish uchun tayyorlandi.
-                Hozirgi mahsulotlar lokal katalogdan o‘qilmoqda.
+              <p className={`text-[11px] uppercase tracking-[0.28em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>Web Admin</p>
+              <h1 className="mt-2 font-display text-4xl">Sanat Hali boshqaruv paneli</h1>
+              <p className={`mt-2 max-w-3xl text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+                Mahsulotlar, zakaz oqimi va katalog eksport/importini shu yerda boshqarasiz.
               </p>
             </div>
-
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className={`rounded-[22px] border px-4 py-3 text-sm font-semibold ${
-                  theme === 'dark' ? 'border-white/10 bg-white/5 text-stone-100' : 'border-stone-200 bg-white text-stone-800'
-                }`}
-              >
-                {theme === 'dark' ? 'Light' : 'Dark'}
+              <button type="button" onClick={onToggleTheme} className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${panelClass}`}>
+                {theme === 'dark' ? "Yorug' tema" : 'Tungi tema'}
               </button>
-              <button
-                type="button"
-                onClick={onBackHome}
-                className={`rounded-[22px] px-5 py-3 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.18)] ${
-                  theme === 'dark'
-                    ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
-                    : 'bg-stone-900 text-white hover:bg-stone-800'
-                }`}
-              >
+              <button type="button" onClick={onBackHome} className="rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white">
                 Showroomga qaytish
               </button>
             </div>
           </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className={`rounded-2xl border p-4 ${panelClass}`}>
+              <div className="text-[11px] uppercase tracking-[0.22em] opacity-70">Mahsulotlar</div>
+              <div className="mt-2 text-2xl font-semibold">{draftProducts.length}</div>
+            </div>
+            <div className={`rounded-2xl border p-4 ${panelClass}`}>
+              <div className="text-[11px] uppercase tracking-[0.22em] opacity-70">Ko'rinadigan</div>
+              <div className="mt-2 text-2xl font-semibold">{totalVisible}</div>
+            </div>
+            <div className={`rounded-2xl border p-4 ${panelClass}`}>
+              <div className="text-[11px] uppercase tracking-[0.22em] opacity-70">Featured</div>
+              <div className="mt-2 text-2xl font-semibold">{totalFeatured}</div>
+            </div>
+          </div>
+        </section>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { label: 'Jami mahsulot', value: String(products.length) },
-              { label: 'Ko‘rinadigan', value: String(visibleCount) },
-              { label: 'Featured', value: String(featuredCount) },
-              { label: 'Katalog manbasi', value: 'Local public/images' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className={`rounded-[24px] border p-4 ${
-                  theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/55'
-                }`}
-              >
-                <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+        <div className="grid gap-4 xl:grid-cols-[270px_minmax(0,1fr)]">
+          <aside className={`rounded-[28px] border p-4 shadow-[0_24px_80px_rgba(20,18,16,0.12)] backdrop-blur-2xl ${panelClass}`}>
+            <div className="space-y-2">
+              {[
+                { id: 'products', label: 'Mahsulotlar' },
+                { id: 'orders', label: 'Buyurtmalar' },
+                { id: 'uploads', label: 'Import / Export' },
+                { id: 'settings', label: 'Sozlamalar' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setSection(item.id as AdminSection)}
+                  className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+                    section === item.id
+                      ? theme === 'dark'
+                        ? 'bg-amber-100 text-stone-900'
+                        : 'bg-stone-900 text-white'
+                      : theme === 'dark'
+                        ? 'bg-white/5 text-stone-200'
+                        : 'bg-white text-stone-700'
+                  }`}
+                >
                   {item.label}
-                </div>
-                <div className="mt-2 text-2xl font-semibold">{item.value}</div>
+                </button>
+              ))}
+            </div>
+            <div className={`mt-6 rounded-2xl border p-4 text-sm ${panelClass}`}>
+              <div className="font-semibold">Tez amallar</div>
+              <div className="mt-3 flex flex-col gap-2">
+                <button type="button" onClick={handleAddProduct} className="rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-white">
+                  Yangi mahsulot
+                </button>
+                <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 font-semibold text-white">
+                  Katalogni saqlash
+                </button>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </aside>
 
-        <section
-          className={`mt-4 rounded-[32px] border p-5 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl ${
-            theme === 'dark'
-              ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
-              : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
-          }`}
-        >
-          <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr]">
-            <label className={`rounded-[24px] border px-4 py-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/55'}`}>
-              <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-                Qidiruv
-              </div>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Nomi, kategoriya yoki tavsif..."
-                className={`mt-2 w-full bg-transparent text-lg outline-none ${theme === 'dark' ? 'text-stone-100 placeholder:text-stone-500' : 'text-stone-900 placeholder:text-stone-400'}`}
-              />
-            </label>
-
-            <label className={`rounded-[24px] border px-4 py-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/55'}`}>
-              <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-                Kategoriya
-              </div>
-              <select
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                className={`mt-2 w-full bg-transparent text-lg outline-none ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}
-              >
-                {categories.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </section>
-
-        <section className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredProducts.map((product) => (
-            <article
-              key={product.id}
-              className={`rounded-[32px] border p-4 shadow-[0_20px_60px_rgba(84,102,140,0.12)] backdrop-blur-2xl ${
-                theme === 'dark'
-                  ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
-                  : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
-              }`}
-            >
-              <div className="aspect-[4/3] overflow-hidden rounded-[24px]">
-                <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
-              </div>
-
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-display text-3xl leading-none">{product.name}</h2>
-                  <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{product.category}</p>
-                </div>
-                {product.featured && (
-                  <div className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${
-                    theme === 'dark' ? 'bg-amber-100 text-stone-900' : 'bg-stone-900 text-white'
-                  }`}>
-                    Featured
+          <section className={`rounded-[28px] border p-4 shadow-[0_24px_80px_rgba(20,18,16,0.12)] backdrop-blur-2xl ${panelClass}`}>
+            {section === 'products' && (
+              <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <div className="space-y-4">
+                  <div className="grid gap-3">
+                    <input
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Qidirish..."
+                      className={`rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`}
+                    />
+                    <select
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value)}
+                      className={`rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`}
+                    >
+                      {categories.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
-              </div>
-
-              <div className={`mt-4 rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/70 bg-white/55'}`}>
-                <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
-                  Bazaviy narx
+                  <div className="space-y-3">
+                    {filteredProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => setSelectedProductId(product.id)}
+                        className={`w-full rounded-[24px] border p-4 text-left transition ${
+                          selectedProduct?.id === product.id
+                            ? theme === 'dark'
+                              ? 'border-amber-200/60 bg-amber-100/10'
+                              : 'border-stone-900/30 bg-stone-900/5'
+                            : ''
+                        } ${panelClass}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-semibold">{product.name}</div>
+                            <div className={`mt-1 text-xs ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{product.category}</div>
+                          </div>
+                          <div className="text-sm font-semibold">{formatPrice(product.basePrice)}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-2 text-2xl font-semibold">{formatPrice(product.basePrice)}</div>
+
+                <div>
+                  {!selectedProduct ? (
+                    <div className={`rounded-[24px] border p-8 text-sm ${panelClass}`}>Mahsulot tanlang yoki yangi mahsulot qo'shing.</div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-3">
+                        <button type="button" onClick={handleAddProduct} className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white">
+                          Yangi mahsulot
+                        </button>
+                        <button type="button" onClick={handleDeleteProduct} className="rounded-2xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white">
+                          O'chirish
+                        </button>
+                        <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white">
+                          Saqlash
+                        </button>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <input value={selectedProduct.name} onChange={(event) => updateSelectedProduct((item) => ({ ...item, name: event.target.value }))} placeholder="Mahsulot nomi" className={`rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                        <input value={selectedProduct.category} onChange={(event) => updateSelectedProduct((item) => ({ ...item, category: event.target.value }))} placeholder="Kategoriya" className={`rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                        <input value={selectedProduct.basePrice} onChange={(event) => updateSelectedProduct((item) => ({ ...item, basePrice: Number(event.target.value) || 0 }))} placeholder="Narx" className={`rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                        <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm ${panelClass}`}>
+                          <span>Featured</span>
+                          <input type="checkbox" checked={Boolean(selectedProduct.featured)} onChange={(event) => updateSelectedProduct((item) => ({ ...item, featured: event.target.checked }))} />
+                        </div>
+                        <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm ${panelClass}`}>
+                          <span>Ko'rinadi</span>
+                          <input type="checkbox" checked={selectedProduct.visible !== false} onChange={(event) => updateSelectedProduct((item) => ({ ...item, visible: event.target.checked }))} />
+                        </div>
+                      </div>
+
+                      <textarea value={selectedProduct.description} onChange={(event) => updateSelectedProduct((item) => ({ ...item, description: event.target.value }))} placeholder="Tavsif" rows={4} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <textarea value={formatList(selectedProduct.images)} onChange={(event) => updateSelectedProduct((item) => ({ ...item, images: parseList(event.target.value) }))} placeholder="Rasm yo'llari, har qatorda bittadan" rows={6} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                        <textarea value={formatList(selectedProduct.specs)} onChange={(event) => updateSelectedProduct((item) => ({ ...item, specs: parseList(event.target.value) }))} placeholder="Specs, har qatorda bittadan" rows={6} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                        <textarea value={formatSizes(selectedProduct.sizes)} onChange={(event) => updateSelectedProduct((item) => ({ ...item, sizes: parseSizes(event.target.value) }))} placeholder="200 x 300 cm|1" rows={6} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${panelClass}`} />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              <p className={`mt-4 text-sm leading-6 ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
-                {product.description}
-              </p>
+            {section === 'orders' && (
+              <div className="space-y-4">
+                <div className={`rounded-[24px] border p-5 text-sm leading-7 ${panelClass}`}>
+                  Buyurtmalar hozir Telegram bot orqali kelmoqda. Keyingi bosqichda shu yerga real orders jadvali, statuslar va preview rasmi bilan CRM oqimini ulash mumkin.
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className={`rounded-[24px] border p-5 ${panelClass}`}>
+                    <div className="font-semibold">Hozir ishlayotgan oqim</div>
+                    <ul className={`mt-3 space-y-2 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+                      <li>Buyurtma admin Telegramga boradi</li>
+                      <li>Telefon va preview rasmi birga yuboriladi</li>
+                      <li>Mahsulot, o'lcham va narx ko'rinadi</li>
+                    </ul>
+                  </div>
+                  <div className={`rounded-[24px] border p-5 ${panelClass}`}>
+                    <div className="font-semibold">Keyingi qo'shish mumkin</div>
+                    <ul className={`mt-3 space-y-2 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+                      <li>Zakaz statuslari</li>
+                      <li>Jadval ko'rinishi</li>
+                      <li>Qidiruv va filtr</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {product.sizes.map((size) => (
-                  <span
-                    key={size.label}
-                    className={`rounded-full px-3 py-2 text-xs ${
-                      theme === 'dark' ? 'bg-white/5 text-stone-200' : 'bg-white/70 text-stone-700'
-                    }`}
+            {section === 'uploads' && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={handleExport} className="rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white">
+                    JSON eksport
+                  </button>
+                  <label className="cursor-pointer rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-stone-900">
+                    JSON import
+                    <input type="file" accept="application/json" className="hidden" onChange={handleImport} />
+                  </label>
+                </div>
+                <div className={`rounded-[24px] border p-5 text-sm ${panelClass}`}>
+                  {uploadMessage || "Bu yerda katalogni JSON ko'rinishida eksport yoki import qilishingiz mumkin."}
+                </div>
+              </div>
+            )}
+
+            {section === 'settings' && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white">
+                    Hozirgi katalogni saqlash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onResetProducts();
+                      setUploadMessage('Default katalog qaytarildi.');
+                    }}
+                    className="rounded-2xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white"
                   >
-                    {size.label}
-                  </span>
-                ))}
+                    Default katalogni qaytarish
+                  </button>
+                </div>
+                <div className={`rounded-[24px] border p-5 text-sm ${panelClass}`}>
+                  Bu panel hozir brauzer localStorage bilan ishlayapti. Keyingi bosqichda shu joydan Supabase products va image storage ga o'tamiz.
+                </div>
               </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {product.specs.slice(0, 4).map((spec) => (
-                  <span
-                    key={spec}
-                    className={`rounded-full border px-3 py-2 text-xs ${
-                      theme === 'dark' ? 'border-white/10 text-stone-300' : 'border-stone-200 text-stone-600'
-                    }`}
-                  >
-                    {spec}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </section>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );

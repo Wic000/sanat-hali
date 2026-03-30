@@ -16,6 +16,7 @@ const TELEGRAM_ORDER_ENDPOINT = '/api/send-order';
 const ROOM_PREVIEW_ENDPOINT = '/api/room-preview';
 const LANG_STORAGE_KEY = 'sanat-hali-lang';
 const THEME_STORAGE_KEY = 'sanat-hali-theme';
+const ADMIN_CATALOG_STORAGE_KEY = 'sanat-hali-admin-catalog';
 
 const formatPrice = (value: number) =>
   `${new Intl.NumberFormat('en-US').format(value).replace(/,/g, ' ')} so'm`;
@@ -31,6 +32,20 @@ const parseJsonResponse = async (response: Response) => {
 
 const getInitialTelegramUser = (): TelegramUser | null =>
   window.Telegram?.WebApp?.initDataUnsafe?.user ?? null;
+
+const cloneDefaultProducts = () => JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)) as Product[];
+
+const readAdminCatalog = () => {
+  if (typeof window === 'undefined') return cloneDefaultProducts();
+  try {
+    const raw = window.localStorage.getItem(ADMIN_CATALOG_STORAGE_KEY);
+    if (!raw) return cloneDefaultProducts();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length ? (parsed as Product[]) : cloneDefaultProducts();
+  } catch {
+    return cloneDefaultProducts();
+  }
+};
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -195,6 +210,7 @@ const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
   const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
   const [telegramUser] = useState<TelegramUser | null>(() => getInitialTelegramUser());
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>(() => readAdminCatalog());
   const [lang, setLang] = useState<AppLang>(() => {
     const saved = window.localStorage.getItem(LANG_STORAGE_KEY) as AppLang | null;
     return saved || detectInitialLang(telegramUser?.language_code);
@@ -243,28 +259,32 @@ const App: React.FC = () => {
     if (!isAdmin) setShowAdminPanel(false);
   }, [isAdmin]);
 
+  useEffect(() => {
+    window.localStorage.setItem(ADMIN_CATALOG_STORAGE_KEY, JSON.stringify(catalogProducts));
+  }, [catalogProducts]);
+
   const categories = useMemo(
     () =>
-      ['All', ...Array.from(new Set(DEFAULT_PRODUCTS.map((product) => product.category)))].map((category) => ({
+      ['All', ...Array.from(new Set(catalogProducts.map((product) => product.category)))].map((category) => ({
         value: category,
         label: translateCategory(category, lang),
       })),
-    [lang]
+    [catalogProducts, lang]
   );
 
   const filteredProducts = useMemo(() => {
-    const source = selectedCategory === 'All' ? DEFAULT_PRODUCTS : DEFAULT_PRODUCTS.filter((product) => product.category === selectedCategory);
+    const source = selectedCategory === 'All' ? catalogProducts : catalogProducts.filter((product) => product.category === selectedCategory);
     return source.map((product) => localizeProduct(product, lang));
-  }, [selectedCategory, lang]);
+  }, [catalogProducts, selectedCategory, lang]);
 
   const selectedProduct = useMemo(() => {
     if (!selectedProductId) return null;
     return (
       filteredProducts.find((product) => product.id === selectedProductId) ||
-      DEFAULT_PRODUCTS.map((product) => localizeProduct(product, lang)).find((product) => product.id === selectedProductId) ||
+      catalogProducts.map((product) => localizeProduct(product, lang)).find((product) => product.id === selectedProductId) ||
       null
     );
-  }, [filteredProducts, selectedProductId, lang]);
+  }, [filteredProducts, selectedProductId, catalogProducts, lang]);
 
   useEffect(() => {
     if (!selectedProduct) return;
@@ -288,19 +308,19 @@ const App: React.FC = () => {
   const selectedGallery = selectedProduct ? selectedProduct.images.slice(0, 5) : [];
 
   const adminSummary = useMemo(() => {
-    const visibleProducts = DEFAULT_PRODUCTS.filter((product) => product.visible !== false).length;
-    const featuredProducts = DEFAULT_PRODUCTS.filter((product) => product.featured).length;
+    const visibleProducts = catalogProducts.filter((product) => product.visible !== false).length;
+    const featuredProducts = catalogProducts.filter((product) => product.featured).length;
     return [
       { label: 'Telegram ID', value: telegramUser?.id ? String(telegramUser.id) : 'Unknown' },
       { label: t(lang, 'products'), value: `${visibleProducts} ta` },
       { label: t(lang, 'featuredCount'), value: `${featuredProducts} ta` },
       { label: t(lang, 'dataSource'), value: t(lang, 'catalogSource') },
     ];
-  }, [telegramUser?.id, lang]);
+  }, [telegramUser?.id, catalogProducts, lang]);
 
   const localizedAdminProducts = useMemo(
-    () => DEFAULT_PRODUCTS.map((product) => localizeProduct(product, lang)),
-    [lang]
+    () => catalogProducts.map((product) => localizeProduct(product, lang)),
+    [catalogProducts, lang]
   );
 
   const handleRoomUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -439,6 +459,8 @@ const App: React.FC = () => {
         onBackHome={() => {
           window.location.href = '/';
         }}
+        onSaveProducts={(products) => setCatalogProducts(products)}
+        onResetProducts={() => setCatalogProducts(cloneDefaultProducts())}
       />
     );
   }
