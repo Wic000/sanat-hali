@@ -12,10 +12,12 @@ interface ProductInfoPanelProps {
   onSelectSize: (sizeLabel: string) => void;
   onChangeNote: (value: string) => void;
   onSubmit: () => void;
+  onOpenRoomPreview: () => void;
   labels: {
     featured: string;
     aiAction: string;
     orderAction: string;
+    roomPreviewAction: string;
     price: string;
     sizes: string;
     description: string;
@@ -39,6 +41,7 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
   onSelectSize,
   onChangeNote,
   onSubmit,
+  onOpenRoomPreview,
   labels,
   theme,
 }) => (
@@ -52,6 +55,17 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         <h2 className={`font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{product.name}</h2>
         <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{product.category}</p>
         <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onOpenRoomPreview}
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
+              theme === 'dark'
+                ? 'border-sky-200/20 bg-sky-200/10 text-sky-100 hover:bg-sky-200/20'
+                : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+            }`}
+          >
+            {labels.roomPreviewAction}
+          </button>
           <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
             theme === 'dark'
               ? 'border-emerald-200/20 bg-emerald-200/10 text-emerald-100'

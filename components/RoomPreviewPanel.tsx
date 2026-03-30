@@ -93,7 +93,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div className="mt-5">
         <div className={`rounded-[24px] border p-4 ${theme === 'dark' ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/42'}`}>
           <div className={`text-[11px] uppercase tracking-[0.22em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
             {labels.aiPreviewDemo}
@@ -102,18 +102,6 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
             {labels.takeRoomShot}
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={onOpen}
-          className={`rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.18)] transition ${
-            theme === 'dark'
-              ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
-              : 'border border-white/85 bg-[rgba(255,255,255,0.7)] text-stone-900 hover:bg-[rgba(255,255,255,0.82)]'
-          }`}
-        >
-          {labels.openPreview}
-        </button>
       </div>
     </section>
 
