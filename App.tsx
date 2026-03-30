@@ -8,6 +8,7 @@ import ProductInfoPanel from './components/ProductInfoPanel';
 import ProductRail from './components/ProductRail';
 import RoomPreviewPanel from './components/RoomPreviewPanel';
 import ShowroomHeader from './components/ShowroomHeader';
+import { CatalogSource, loadCatalogProducts, saveCatalogProductsToSupabase } from './catalogStore';
 import { ADMIN_TELEGRAM_IDS, DEFAULT_PRODUCTS, SHOWROOM_COPY } from './constants';
 import { detectInitialLang, localizeProduct, t, toggleTheme, translateCategory } from './i18n';
 import { AppLang, Product, RoomDimensions, RoomPlacementMode, RoomPreviewResult, TelegramUser, ThemeMode } from './types';
@@ -211,6 +212,8 @@ const App: React.FC = () => {
   const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
   const [telegramUser] = useState<TelegramUser | null>(() => getInitialTelegramUser());
   const [catalogProducts, setCatalogProducts] = useState<Product[]>(() => readAdminCatalog());
+  const [catalogSource, setCatalogSource] = useState<CatalogSource>('local');
+  const [isCatalogSyncing, setIsCatalogSyncing] = useState(false);
   const [lang, setLang] = useState<AppLang>(() => {
     const saved = window.localStorage.getItem(LANG_STORAGE_KEY) as AppLang | null;
     return saved || detectInitialLang(telegramUser?.language_code);
@@ -258,6 +261,22 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAdmin) setShowAdminPanel(false);
   }, [isAdmin]);
+
+  useEffect(() => {
+    let active = true;
+    const bootstrapCatalog = async () => {
+      const result = await loadCatalogProducts();
+      if (!active) return;
+      setCatalogSource(result.source);
+      if (result.products) {
+        setCatalogProducts(result.products.length ? result.products : cloneDefaultProducts());
+      }
+    };
+    void bootstrapCatalog();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(ADMIN_CATALOG_STORAGE_KEY, JSON.stringify(catalogProducts));
@@ -314,9 +333,9 @@ const App: React.FC = () => {
       { label: 'Telegram ID', value: telegramUser?.id ? String(telegramUser.id) : 'Unknown' },
       { label: t(lang, 'products'), value: `${visibleProducts} ta` },
       { label: t(lang, 'featuredCount'), value: `${featuredProducts} ta` },
-      { label: t(lang, 'dataSource'), value: t(lang, 'catalogSource') },
+      { label: t(lang, 'dataSource'), value: catalogSource === 'supabase' ? 'Supabase' : catalogSource === 'supabase-fallback' ? 'Supabase fallback' : 'Local storage' },
     ];
-  }, [telegramUser?.id, catalogProducts, lang]);
+  }, [telegramUser?.id, catalogProducts, lang, catalogSource]);
 
   const localizedAdminProducts = useMemo(
     () => catalogProducts.map((product) => localizeProduct(product, lang)),
@@ -449,6 +468,25 @@ const App: React.FC = () => {
     setOrderFeedback({ status: 'idle', message: '' });
   };
 
+  const handleSaveCatalog = async (products: Product[]) => {
+    setCatalogProducts(products);
+    setIsCatalogSyncing(true);
+    try {
+      const result = await saveCatalogProductsToSupabase(products);
+      setCatalogSource(result.saved ? 'supabase' : 'local');
+    } catch {
+      setCatalogSource('supabase-fallback');
+      throw new Error("Supabase'ga saqlashda xato bo'ldi. Table yoki policy tekshiring.");
+    } finally {
+      setIsCatalogSyncing(false);
+    }
+  };
+
+  const handleResetCatalog = async () => {
+    const defaults = cloneDefaultProducts();
+    await handleSaveCatalog(defaults);
+  };
+
   if (isAdminRoute) {
     return (
       <AdminDashboard
@@ -459,8 +497,10 @@ const App: React.FC = () => {
         onBackHome={() => {
           window.location.href = '/';
         }}
-        onSaveProducts={(products) => setCatalogProducts(products)}
-        onResetProducts={() => setCatalogProducts(cloneDefaultProducts())}
+        onSaveProducts={handleSaveCatalog}
+        onResetProducts={handleResetCatalog}
+        storageLabel={catalogSource === 'supabase' ? 'Supabase' : catalogSource === 'supabase-fallback' ? 'Supabase fallback' : 'Local storage'}
+        isSaving={isCatalogSyncing}
       />
     );
   }

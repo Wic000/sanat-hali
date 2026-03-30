@@ -7,8 +7,10 @@ interface AdminDashboardProps {
   theme: ThemeMode;
   onToggleTheme: () => void;
   onBackHome: () => void;
-  onSaveProducts: (products: Product[]) => void;
-  onResetProducts: () => void;
+  onSaveProducts: (products: Product[]) => Promise<void> | void;
+  onResetProducts: () => Promise<void> | void;
+  storageLabel: string;
+  isSaving: boolean;
 }
 
 type AdminSection = 'products' | 'orders' | 'uploads' | 'settings';
@@ -63,6 +65,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackHome,
   onSaveProducts,
   onResetProducts,
+  storageLabel,
+  isSaving,
 }) => {
   const [section, setSection] = useState<AdminSection>('products');
   const [query, setQuery] = useState('');
@@ -70,6 +74,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [draftProducts, setDraftProducts] = useState<Product[]>(() => cloneProducts(products));
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || '');
   const [uploadMessage, setUploadMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     const cloned = cloneProducts(products);
@@ -155,6 +160,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const handleSave = async () => {
+    try {
+      await onSaveProducts(cloneProducts(draftProducts));
+      setSaveMessage("Katalog muvaffaqiyatli saqlandi.");
+    } catch (error) {
+      setSaveMessage(error instanceof Error ? error.message : "Saqlashda xato bo'ldi.");
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      await onResetProducts();
+      setSaveMessage('Default katalog qaytarildi.');
+    } catch (error) {
+      setSaveMessage(error instanceof Error ? error.message : "Reset qilishda xato bo'ldi.");
+    }
+  };
+
   return (
     <div className={`min-h-screen px-4 py-5 sm:px-6 ${theme === 'dark' ? 'bg-[#0f1014]' : 'bg-[#eef1f6]'}`}>
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-4">
@@ -175,6 +198,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Showroomga qaytish
               </button>
             </div>
+          </div>
+          <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm ${panelClass}`}>
+            Storage: {storageLabel}{isSaving ? ' · saqlanmoqda...' : ''}
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             <div className={`rounded-2xl border p-4 ${panelClass}`}>
@@ -225,7 +251,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button type="button" onClick={handleAddProduct} className="rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-white">
                   Yangi mahsulot
                 </button>
-                <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 font-semibold text-white">
+                <button type="button" onClick={handleSave} className="rounded-2xl bg-blue-500 px-4 py-3 font-semibold text-white" disabled={isSaving}>
                   Katalogni saqlash
                 </button>
               </div>
@@ -318,7 +344,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <button type="button" onClick={handleDeleteProduct} className="rounded-2xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white">
                           O'chirish
                         </button>
-                        <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white">
+                        <button type="button" onClick={handleSave} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white" disabled={isSaving}>
                           Saqlash
                         </button>
                       </div>
@@ -388,7 +414,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </label>
                 </div>
                 <div className={`rounded-[24px] border p-5 text-sm ${panelClass}`}>
-                  {uploadMessage || "Bu yerda katalogni JSON ko'rinishida eksport yoki import qilishingiz mumkin."}
+                  {uploadMessage || saveMessage || "Bu yerda katalogni JSON ko'rinishida eksport yoki import qilishingiz mumkin."}
                 </div>
               </div>
             )}
@@ -396,16 +422,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {section === 'settings' && (
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={() => onSaveProducts(cloneProducts(draftProducts))} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white">
+                  <button type="button" onClick={handleSave} className="rounded-2xl bg-blue-500 px-4 py-3 text-sm font-semibold text-white" disabled={isSaving}>
                     Hozirgi katalogni saqlash
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      onResetProducts();
-                      setUploadMessage('Default katalog qaytarildi.');
-                    }}
+                    onClick={handleReset}
                     className="rounded-2xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white"
+                    disabled={isSaving}
                   >
                     Default katalogni qaytarish
                   </button>
