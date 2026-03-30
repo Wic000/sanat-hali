@@ -19,6 +19,33 @@ const dataUrlToBlob = async (dataUrl) => {
   return response.blob();
 };
 
+const sendTelegramPhoto = async ({ token, chatId, photoDataUrl, caption }) => {
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  formData.append('photo', await dataUrlToBlob(photoDataUrl), 'room-preview.png');
+  formData.append('caption', caption);
+  formData.append('parse_mode', 'HTML');
+
+  return fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST',
+    body: formData,
+  });
+};
+
+const sendTelegramMessage = async ({ token, chatId, text }) =>
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    }),
+  });
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -84,27 +111,17 @@ export async function handler(event) {
     let telegramResponse;
 
     if (previewImage) {
-      const formData = new FormData();
-      formData.append('chat_id', String(adminChatId));
-      formData.append('photo', await dataUrlToBlob(previewImage), 'room-preview.png');
-      formData.append('caption', text);
-      formData.append('parse_mode', 'HTML');
-      telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-        method: 'POST',
-        body: formData,
+      telegramResponse = await sendTelegramPhoto({
+        token,
+        chatId: adminChatId,
+        photoDataUrl: previewImage,
+        caption: text,
       });
     } else {
-      telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: adminChatId,
-          text,
-          parse_mode: 'HTML',
-          disable_web_page_preview: true,
-        }),
+      telegramResponse = await sendTelegramMessage({
+        token,
+        chatId: adminChatId,
+        text,
       });
     }
 
@@ -117,6 +134,33 @@ export async function handler(event) {
           error: telegramData?.description || 'Telegram Bot API request failed',
         }),
       };
+    }
+
+    if (previewImage && user?.id) {
+      const customerCaption = [
+        '<b>Sanat Hali</b>',
+        '',
+        '<b>Sizning xonadagi preview tayyor.</b>',
+        `<b>Mahsulot:</b> ${escapeHtml(productName)}`,
+        `<b>O'lcham:</b> ${escapeHtml(size)}`,
+        `<b>Narx:</b> ${escapeHtml(formatMoney(price))}`,
+      ].join('\n');
+
+      try {
+        const customerResponse = await sendTelegramPhoto({
+          token,
+          chatId: user.id,
+          photoDataUrl: previewImage,
+          caption: customerCaption,
+        });
+        const customerData = await customerResponse.json();
+
+        if (!customerResponse.ok || !customerData?.ok) {
+          console.warn('Failed to send preview image to customer:', customerData?.description || 'Unknown Telegram error');
+        }
+      } catch (customerError) {
+        console.warn('Failed to send preview image to customer:', customerError);
+      }
     }
 
     return {
