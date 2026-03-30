@@ -286,6 +286,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className={`rounded-[24px] border p-8 text-sm ${panelClass}`}>Mahsulot tanlang yoki yangi mahsulot qo'shing.</div>
                   ) : (
                     <div className="space-y-4">
+                      <div className={`rounded-[26px] border p-4 ${panelClass}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-[11px] uppercase tracking-[0.22em] opacity-70">Preview</div>
+                            <div className="mt-2 text-lg font-semibold">{selectedProduct.name || 'Yangi mahsulot'}</div>
+                            <div className={`mt-1 text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
+                              {selectedProduct.category || 'Kategoriya yoq'}
+                            </div>
+                          </div>
+                          <div className="text-sm font-semibold">{formatPrice(selectedProduct.basePrice || 0)}</div>
+                        </div>
+                        <div className="mt-4 overflow-hidden rounded-[22px] border border-black/5 bg-black/5">
+                          {selectedProduct.images[0] ? (
+                            <img
+                              src={selectedProduct.images[0]}
+                              alt={selectedProduct.name || 'Product preview'}
+                              className="h-[280px] w-full object-cover"
+                            />
+                          ) : (
+                            <div className={`flex h-[280px] items-center justify-center text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+                              Asosiy rasm hali kiritilmagan
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-3">
                         <button type="button" onClick={handleAddProduct} className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white">
                           Yangi mahsulot
