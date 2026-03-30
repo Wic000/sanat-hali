@@ -55,17 +55,6 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
         <h2 className={`font-display text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{product.name}</h2>
         <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{product.category}</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onOpenRoomPreview}
-            className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
-              theme === 'dark'
-                ? 'border-sky-200/20 bg-sky-200/10 text-sky-100 hover:bg-sky-200/20'
-                : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
-            }`}
-          >
-            {labels.roomPreviewAction}
-          </button>
           <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
             theme === 'dark'
               ? 'border-emerald-200/20 bg-emerald-200/10 text-emerald-100'
@@ -157,18 +146,31 @@ const ProductInfoPanel: React.FC<ProductInfoPanelProps> = ({
       />
     </div>
 
-    <button
-      type="button"
-      onClick={onSubmit}
-      disabled={isSubmitting}
-      className={`mt-5 hidden w-full rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex lg:items-center lg:justify-center ${
-        theme === 'dark'
-          ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
-          : 'border border-white/85 bg-[rgba(255,255,255,0.7)] text-stone-900 hover:bg-[rgba(255,255,255,0.82)]'
-      }`}
-    >
-      {isSubmitting ? labels.orderSending : labels.orderNow}
-    </button>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <button
+        type="button"
+        onClick={onOpenRoomPreview}
+        className={`rounded-[22px] px-5 py-4 text-sm font-semibold transition ${
+          theme === 'dark'
+            ? 'border border-sky-200/20 bg-sky-200/10 text-sky-100 hover:bg-sky-200/20'
+            : 'border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+        }`}
+      >
+        {labels.roomPreviewAction}
+      </button>
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={isSubmitting}
+        className={`rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+          theme === 'dark'
+            ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
+            : 'border border-white/85 bg-[rgba(255,255,255,0.7)] text-stone-900 hover:bg-[rgba(255,255,255,0.82)]'
+        }`}
+      >
+        {isSubmitting ? labels.orderSending : labels.orderNow}
+      </button>
+    </div>
 
     {orderStatus !== 'idle' && (
       <div

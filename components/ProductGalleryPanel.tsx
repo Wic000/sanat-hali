@@ -12,6 +12,10 @@ interface ProductGalleryPanelProps {
   zoomInLabel: string;
   zoomOutLabel: string;
   onBack: () => void;
+  onOrder: () => void;
+  onOpenRoomPreview: () => void;
+  orderLabel: string;
+  roomPreviewLabel: string;
   theme: ThemeMode;
 }
 
@@ -26,6 +30,10 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
   zoomInLabel,
   zoomOutLabel,
   onBack,
+  onOrder,
+  onOpenRoomPreview,
+  orderLabel,
+  roomPreviewLabel,
   theme,
 }) => {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
@@ -252,6 +260,48 @@ const ProductGalleryPanel: React.FC<ProductGalleryPanelProps> = ({
               >
                 <img src={selectedImage} alt={product.name} className="w-full rounded-[20px] object-cover" />
               </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsZoomOpen(false);
+                  onOpenRoomPreview();
+                }}
+                className={`rounded-[22px] px-4 py-3 text-sm font-semibold transition ${
+                  theme === 'dark'
+                    ? 'border border-sky-200/20 bg-sky-200/10 text-sky-100 hover:bg-sky-200/20'
+                    : 'border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+                }`}
+              >
+                {roomPreviewLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsZoomOpen(false);
+                  onOrder();
+                }}
+                className={`rounded-[22px] px-4 py-3 text-sm font-semibold ${
+                  theme === 'dark'
+                    ? 'bg-amber-100 text-stone-900 hover:bg-amber-50'
+                    : 'bg-stone-900 text-white hover:bg-stone-800'
+                }`}
+              >
+                {orderLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsZoomOpen(false)}
+                className={`rounded-[22px] border px-4 py-3 text-sm font-semibold ${
+                  theme === 'dark'
+                    ? 'border-white/10 bg-white/5 text-stone-200'
+                    : 'border-stone-200 bg-white text-stone-700'
+                }`}
+              >
+                {closeLabel}
+              </button>
             </div>
           </div>
         </div>
