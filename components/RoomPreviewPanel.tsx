@@ -17,6 +17,7 @@ interface RoomPreviewPanelProps {
   onModeChange: (mode: RoomPlacementMode) => void;
   onDimensionsChange: React.Dispatch<React.SetStateAction<RoomDimensions>>;
   onApply: () => void;
+  onOrder: () => void;
   labels: {
     roomPreview: string;
     aiPreviewDemo: string;
@@ -39,6 +40,7 @@ interface RoomPreviewPanelProps {
     generatingPreview: string;
     estimatedWait: string;
     previewReadyStatus: string;
+    orderNow: string;
   };
   theme: ThemeMode;
 }
@@ -59,6 +61,7 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
   onModeChange,
   onDimensionsChange,
   onApply,
+  onOrder,
   labels,
   theme,
 }) => (
@@ -245,6 +248,20 @@ const RoomPreviewPanel: React.FC<RoomPreviewPanelProps> = ({
             <div className={`mt-3 text-center text-sm ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>
               {labels.estimatedWait}
             </div>
+          )}
+
+          {generatedPreviewImage && !isGenerating && (
+            <button
+              type="button"
+              onClick={onOrder}
+              className={`mt-3 w-full rounded-[22px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.18)] transition ${
+                theme === 'dark'
+                  ? 'border border-white/10 bg-white/5 text-stone-100 hover:border-white/20 hover:bg-white/10'
+                  : 'border border-stone-900 bg-white text-stone-900 hover:bg-stone-50'
+              }`}
+            >
+              {labels.orderNow}
+            </button>
           )}
 
           {previewError && (
