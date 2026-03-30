@@ -11,20 +11,37 @@ interface ProductRailProps {
   modelsLabel: string;
   premiumLabel: string;
   theme: ThemeMode;
+  actionLabel?: string;
+  onAction?: () => void;
+  actionDisabled?: boolean;
 }
 
-const ProductRail: React.FC<ProductRailProps> = ({ products, selectedProductId, formatPrice, onSelect, collectionLabel, title, modelsLabel, premiumLabel, theme }) => (
+const ProductRail: React.FC<ProductRailProps> = ({ products, selectedProductId, formatPrice, onSelect, collectionLabel, title, modelsLabel, premiumLabel, theme, actionLabel, onAction, actionDisabled }) => (
   <section className={`mt-6 rounded-[32px] border p-4 shadow-[0_20px_80px_rgba(84,102,140,0.14)] backdrop-blur-2xl sm:p-5 ${
     theme === 'dark'
       ? 'border-white/10 bg-[linear-gradient(145deg,_rgba(31,37,52,0.72),_rgba(18,21,29,0.54))]'
       : 'border-white/75 bg-[linear-gradient(145deg,_rgba(255,255,255,0.56),_rgba(239,245,255,0.4))]'
   }`}>
-    <div className="flex items-end justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className={`text-[11px] uppercase tracking-[0.24em] ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{collectionLabel}</p>
         <h2 className={`mt-2 font-display text-2xl sm:text-3xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>{title}</h2>
       </div>
-      <div className={`text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{products.length} {modelsLabel}</div>
+      <div className="flex items-center gap-3">
+        <div className={`text-sm ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>{products.length} {modelsLabel}</div>
+        {actionLabel && onAction && (
+          <button
+            type="button"
+            onClick={onAction}
+            disabled={actionDisabled}
+            className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              theme === 'dark' ? 'bg-amber-100 text-stone-900 hover:bg-amber-50' : 'bg-stone-900 text-white hover:bg-stone-800'
+            }`}
+          >
+            {actionLabel}
+          </button>
+        )}
+      </div>
     </div>
 
     <div className="mt-4 grid grid-cols-4 gap-2 sm:hidden">

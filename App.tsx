@@ -521,13 +521,12 @@ const App: React.FC = () => {
             <RoomPreviewPanel product={selectedProduct} roomImage={roomImage} generatedPreviewImage={generatedRoomPreview?.image || null} previewProvider={generatedRoomPreview?.provider || null} roomPlacementMode={roomPlacementMode} roomDimensions={roomDimensions} isOpen={showRoomPreview} isGenerating={isGeneratingRoomPreview} previewError={roomPreviewError} onOpen={() => setShowRoomPreview(true)} onClose={() => setShowRoomPreview(false)} onUpload={handleRoomUpload} onModeChange={setRoomPlacementMode} onDimensionsChange={setRoomDimensions} onApply={handleGenerateRoomPreview} labels={{ roomPreview: t(lang, 'roomPreview'), aiPreviewDemo: t(lang, 'aiPreviewDemo'), demoReady: t(lang, 'demoReady'), roomUploadHint: t(lang, 'roomUploadHint'), uploadRoomCta: t(lang, 'uploadRoomCta'), centerPlacement: t(lang, 'centerPlacement'), centerPlacementHint: t(lang, 'centerPlacementHint'), fullCoverage: t(lang, 'fullCoverage'), fullCoverageHint: t(lang, 'fullCoverageHint'), roomWidth: t(lang, 'roomWidth'), roomHeight: t(lang, 'roomHeight'), applyPreview: t(lang, 'applyPreview'), aiBlock: t(lang, 'aiBlock'), aiBlockHint: t(lang, 'aiBlockHint'), openPreview: t(lang, 'openPreview'), openPreviewHint: t(lang, 'openPreviewHint'), close: t(lang, 'close'), takeRoomShot: t(lang, 'takeRoomShot'), generatingPreview: t(lang, 'generatingPreview'), estimatedWait: t(lang, 'estimatedWait'), previewReadyStatus: t(lang, 'previewReadyStatus') }} theme={theme} />
           </main>
         )}
-        <section className="mt-4 lg:hidden">
-          <button type="button" onClick={handleOrderAction} disabled={isSubmitting || !selectedProduct} className={`w-full rounded-[24px] px-5 py-4 text-sm font-semibold shadow-[0_18px_30px_rgba(28,25,23,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60 ${theme === 'dark' ? 'bg-amber-100 text-stone-900 hover:bg-amber-50' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-            {isSubmitting ? t(lang, 'orderSending') : t(lang, 'orderNow')}
-          </button>
-          {orderFeedback.status !== 'idle' && <div className={`mt-3 rounded-2xl px-4 py-3 text-sm ${orderFeedback.status === 'success' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>{orderFeedback.message}</div>}
-        </section>
-        <ProductRail products={filteredProducts} selectedProductId={selectedProduct?.id || null} formatPrice={formatPrice} onSelect={handleSelectProduct} collectionLabel={t(lang, 'collection')} title={t(lang, 'supportingGallery')} modelsLabel={t(lang, 'models')} premiumLabel={t(lang, 'featured')} theme={theme} />
+        <ProductRail products={filteredProducts} selectedProductId={selectedProduct?.id || null} formatPrice={formatPrice} onSelect={handleSelectProduct} collectionLabel={t(lang, 'collection')} title={t(lang, 'supportingGallery')} modelsLabel={t(lang, 'models')} premiumLabel={t(lang, 'featured')} theme={theme} actionLabel={t(lang, 'orderNow')} onAction={handleOrderAction} actionDisabled={isSubmitting || !selectedProduct} />
+        {orderFeedback.status !== 'idle' && (
+          <section className="mt-4 lg:hidden">
+            <div className={`rounded-2xl px-4 py-3 text-sm ${orderFeedback.status === 'success' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>{orderFeedback.message}</div>
+          </section>
+        )}
         <HeroBanner badge={t(lang, 'heroBadge')} title={t(lang, 'heroTitle')} description={t(lang, 'heroDescription')} metrics={[{ label: t(lang, 'products'), value: SHOWROOM_COPY.metrics[0].value }, { label: t(lang, 'galleryShots'), value: SHOWROOM_COPY.metrics[1].value }, { label: t(lang, 'orderRoute'), value: t(lang, 'telegramBot') }]} theme={theme} />
       </div>
       {showPhoneModal && (
