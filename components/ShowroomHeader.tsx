@@ -11,7 +11,6 @@ interface ShowroomHeaderProps {
   languageLabel: string;
   themeLabel: string;
   customerLabel: string;
-  appBadge: string;
   subtitle: string;
   adminOpenLabel: string;
   adminCloseLabel: string;
@@ -47,7 +46,6 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
   languageLabel,
   themeLabel,
   customerLabel,
-  appBadge,
   subtitle,
   adminOpenLabel,
   adminCloseLabel,
@@ -67,14 +65,15 @@ const ShowroomHeader: React.FC<ShowroomHeaderProps> = ({
   }`}>
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
-        <div className={`mb-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] sm:px-3 sm:text-[11px] ${
-          theme === 'dark'
-            ? 'border-amber-200/20 bg-white/5 text-amber-100/80'
-            : 'border-amber-200/70 bg-white/60 text-amber-900/70'
-        }`}>
-          {appBadge}
-        </div>
-        <h1 className={`font-display text-[2.1rem] leading-none sm:text-4xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}>Sanat Hali</h1>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = '/';
+          }}
+          className={`font-display text-left text-[2.1rem] leading-none transition hover:opacity-80 sm:text-4xl ${theme === 'dark' ? 'text-stone-100' : 'text-stone-900'}`}
+        >
+          Sanat Hali
+        </button>
         <p className={`mt-1 max-w-2xl text-xs sm:mt-2 sm:text-base ${theme === 'dark' ? 'text-stone-300' : 'text-stone-600'}`}>{subtitle}</p>
       </div>
 
