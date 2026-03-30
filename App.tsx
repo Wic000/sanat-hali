@@ -1,4 +1,5 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import AdminDashboard from './components/AdminDashboard';
 import AdminPanel from './components/AdminPanel';
 import CategoryChips from './components/CategoryChips';
 import HeroBanner from './components/HeroBanner';
@@ -192,6 +193,7 @@ const createRoomPlacementPreview = async ({
 
 const App: React.FC = () => {
   const tg = window.Telegram?.WebApp;
+  const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
   const [telegramUser] = useState<TelegramUser | null>(() => getInitialTelegramUser());
   const [lang, setLang] = useState<AppLang>(() => {
     const saved = window.localStorage.getItem(LANG_STORAGE_KEY) as AppLang | null;
@@ -295,6 +297,11 @@ const App: React.FC = () => {
       { label: t(lang, 'dataSource'), value: t(lang, 'catalogSource') },
     ];
   }, [telegramUser?.id, lang]);
+
+  const localizedAdminProducts = useMemo(
+    () => DEFAULT_PRODUCTS.map((product) => localizeProduct(product, lang)),
+    [lang]
+  );
 
   const handleRoomUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -421,6 +428,20 @@ const App: React.FC = () => {
     setShowPhoneModal(false);
     setOrderFeedback({ status: 'idle', message: '' });
   };
+
+  if (isAdminRoute) {
+    return (
+      <AdminDashboard
+        products={localizedAdminProducts}
+        formatPrice={formatPrice}
+        theme={theme}
+        onToggleTheme={() => setTheme((current) => toggleTheme(current))}
+        onBackHome={() => {
+          window.location.href = '/';
+        }}
+      />
+    );
+  }
 
   return (
     <div className={`ios-liquid-bg min-h-screen ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_rgba(53,62,86,0.52),_rgba(20,23,31,0.9),_rgba(10,12,18,0.98))] text-stone-100' : 'bg-[linear-gradient(180deg,_rgba(247,243,236,0.94)_0%,_rgba(231,226,217,0.92)_58%,_rgba(219,222,228,0.84)_100%)] text-stone-900'}`}>

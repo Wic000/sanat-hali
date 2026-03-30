@@ -25,8 +25,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ telegramId, summary, title, hin
         <h2 className="mt-2 font-display text-3xl">{title}</h2>
         <p className="mt-2 max-w-2xl text-sm text-stone-200/80">{hint}</p>
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-stone-200/90">
-        {telegramUserLabel}: {telegramId || 'Unknown'}
+      <div className="flex flex-col gap-3 md:items-end">
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-stone-200/90">
+          {telegramUserLabel}: {telegramId || 'Unknown'}
+        </div>
+        <a
+          href="/admin"
+          className="rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-stone-900 transition hover:bg-amber-50"
+        >
+          Web adminni ochish
+        </a>
       </div>
     </div>
 
